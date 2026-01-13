@@ -14,7 +14,7 @@ This app provides a simple UI for:
 - [TypeScript](https://www.typescriptlang.org/) (type safety)  
 - [TailwindCSS](https://tailwindcss.com/) (styling)  
 - [thirdweb SDK](https://portal.thirdweb.com/) (wallet connection & contract interaction)  
-- Deployed on **Etherlink Ghostnet** (testnet)  
+- Deployed on **Etherlink Shadownet** (testnet)  
 
 ## 🚀 Getting Started
 
@@ -65,14 +65,14 @@ Open `http://localhost:3000` in your browser.
 
 ## 🌐 Network Setup
 
-Connect your wallet to **Etherlink Ghostnet (testnet):**
+Connect your wallet to **Etherlink Shadownet (testnet):**
 
-* **Network Name**: Etherlink Ghostnet
-* **RPC URL**: `https://node.ghostnet.etherlink.com`
-* **Chain ID**: `128123`
+* **Network Name**: Etherlink Shadownet
+* **RPC URL**: `https://node.shadownet.etherlink.com`
+* **Chain ID**: `127823`
 * **Currency Symbol**: `XTZ`
 
-Get free testnet XTZ from the [Etherlink Faucet](https://faucet.etherlink.com/).
+Get free testnet XTZ from the [Etherlink Faucet](https://shadownet.faucet.etherlink.com/).
 
 ---
 
