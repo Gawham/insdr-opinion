@@ -1,4 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 // Initialize the client with API key from environment
 const ai = new GoogleGenAI({
@@ -21,6 +25,78 @@ export async function generateContent(prompt, model = process.env.LLM_MODEL || "
   } catch (error) {
     console.error("Gemini API Error:", error);
     throw new Error(`Failed to generate content: ${error.message}`);
+  }
+}
+
+/**
+ * Generate content from a file (PDF, image, etc.) using Gemini AI
+ * @param {Buffer} fileBuffer - The file buffer
+ * @param {string} mimeType - The MIME type of the file (e.g., 'application/pdf', 'image/png')
+ * @param {string} prompt - The prompt/question about the file
+ * @param {string} model - The model to use (default: gemini-3-flash-preview)
+ * @returns {Promise<string>} - The generated content
+ */
+export async function generateContentFromFile(fileBuffer, mimeType, prompt, model = process.env.LLM_MODEL || "gemini-3-flash-preview") {
+  try {
+    const contents = [
+      { text: prompt },
+      {
+        inlineData: {
+          mimeType: mimeType,
+          data: fileBuffer.toString("base64")
+        }
+      }
+    ];
+
+    const response = await ai.models.generateContent({
+      model,
+      contents: contents
+    });
+
+    return response.text;
+  } catch (error) {
+    console.error("Gemini File API Error:", error);
+    throw new Error(`Failed to generate content from file: ${error.message}`);
+  }
+}
+
+/**
+ * Fetch a file from URL and generate content using Gemini AI
+ * @param {string} fileUrl - The URL of the file to fetch
+ * @param {string} prompt - The prompt/question about the file
+ * @param {string} model - The model to use (default: gemini-3-flash-preview)
+ * @returns {Promise<string>} - The generated content
+ */
+export async function generateContentFromUrl(fileUrl, prompt, model = process.env.LLM_MODEL || "gemini-3-flash-preview") {
+  try {
+    // Fetch the file
+    const response = await fetch(fileUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch file from URL: ${response.statusText}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const mimeType = response.headers.get('content-type') || 'application/pdf';
+
+    const contents = [
+      { text: prompt },
+      {
+        inlineData: {
+          mimeType: mimeType,
+          data: Buffer.from(arrayBuffer).toString("base64")
+        }
+      }
+    ];
+
+    const result = await ai.models.generateContent({
+      model,
+      contents: contents
+    });
+
+    return result.text;
+  } catch (error) {
+    console.error("Gemini URL Fetch Error:", error);
+    throw new Error(`Failed to generate content from URL: ${error.message}`);
   }
 }
 
@@ -59,5 +135,41 @@ ${text}`;
     }
   } catch (error) {
     throw new Error(`Auto-segmentation failed: ${error.message}`);
+  }
+}
+
+/**
+ * Auto-segment a document file using Gemini AI
+ * @param {Buffer} fileBuffer - The file buffer
+ * @param {string} mimeType - The MIME type of the file
+ * @returns {Promise<object>} - The segmented content with metadata
+ */
+export async function autoSegmentFile(fileBuffer, mimeType) {
+  const prompt = `Analyze this document and segment it into logical sections.
+For each segment, provide:
+- A title
+- A summary
+- Key points
+- Sentiment (positive, neutral, negative)
+
+Return the result as a JSON object.`;
+
+  try {
+    const response = await generateContentFromFile(fileBuffer, mimeType, prompt);
+
+    // Try to parse as JSON, fallback to raw response
+    try {
+      return JSON.parse(response);
+    } catch {
+      return {
+        segments: [{
+          title: "Auto-generated analysis",
+          content: response,
+          sentiment: "neutral"
+        }]
+      };
+    }
+  } catch (error) {
+    throw new Error(`File auto-segmentation failed: ${error.message}`);
   }
 }

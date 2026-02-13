@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node test-gemini.js",
+    "test:docs": "node test-document-analysis.js",
     "dev": "node --watch server.js"
   },
   "keywords": [],

@@ -6,7 +6,13 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { Storage } from '@google-cloud/storage';
 import multer from 'multer';
 import dotenv from 'dotenv';
-import { autoSegment, generateContent } from './services/geminiService.js';
+import {
+    autoSegment,
+    autoSegmentFile,
+    generateContent,
+    generateContentFromFile,
+    generateContentFromUrl
+} from './services/geminiService.js';
 
 dotenv.config();
 
@@ -67,6 +73,59 @@ app.use(express.json());
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', message: 'Server is running' });
+});
+
+// Verify transaction on Etherlink
+app.get('/verify/:txHash', async (req, res) => {
+    try {
+        const { txHash } = req.params;
+
+        // Fetch transaction from Etherlink explorer API
+        const explorerUrl = `https://shadownet.explorer.etherlink.com/api/v2/transactions/${txHash}`;
+        const response = await fetch(explorerUrl);
+
+        if (!response.ok) {
+            return res.status(404).json({
+                error: "Transaction not found",
+                txHash
+            });
+        }
+
+        const txData = await response.json();
+
+        // Parse the response
+        const verification = {
+            txHash: txData.hash,
+            status: txData.status === 'ok' ? 'SUCCESS' : 'FAILED',
+            blockNumber: txData.block_number,
+            confirmations: txData.confirmations,
+            timestamp: txData.timestamp,
+            from: txData.from.hash,
+            to: txData.to.hash,
+            gasUsed: txData.gas_used,
+            verified: txData.status === 'ok',
+            explorerUrl: `https://shadownet.explorer.etherlink.com/tx/${txHash}`,
+            contractAddress: process.env.CONTRACT_ADDRESS,
+            isAuditContract: txData.to.hash.toLowerCase() === process.env.CONTRACT_ADDRESS.toLowerCase()
+        };
+
+        // Get transaction receipt for logs/events
+        const receipt = await publicClient.getTransactionReceipt({ hash: txHash });
+
+        if (receipt && receipt.logs && receipt.logs.length > 0) {
+            verification.requestId = receipt.logs[0]?.topics[1] || null;
+            verification.events = receipt.logs.length;
+        }
+
+        res.status(200).json({
+            message: "Transaction verified successfully",
+            verification
+        });
+
+    } catch (error) {
+        console.error("Verification error:", error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 app.post('/audit-request', upload.single('contextFile'), async (req, res) => {
@@ -182,6 +241,106 @@ app.post('/generate', async (req, res) => {
 
     } catch (error) {
         console.error("Generate error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Analyze document from file upload
+app.post('/analyze-document', upload.single('file'), async (req, res) => {
+    try {
+        const { prompt, model } = req.body;
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).json({ error: "No file provided" });
+        }
+
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(500).json({
+                error: "GEMINI_API_KEY not configured. Please set it in your .env file"
+            });
+        }
+
+        const defaultPrompt = "Summarize this document and extract key insights";
+        const content = await generateContentFromFile(
+            file.buffer,
+            file.mimetype,
+            prompt || defaultPrompt,
+            model
+        );
+
+        res.status(200).json({
+            message: "Document analyzed successfully",
+            model: model || process.env.LLM_MODEL || "gemini-3-flash-preview",
+            fileName: file.originalname,
+            mimeType: file.mimetype,
+            content
+        });
+
+    } catch (error) {
+        console.error("Analyze document error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Auto-segment document from file upload
+app.post('/auto-segment-document', upload.single('file'), async (req, res) => {
+    try {
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).json({ error: "No file provided" });
+        }
+
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(500).json({
+                error: "GEMINI_API_KEY not configured. Please set it in your .env file"
+            });
+        }
+
+        const result = await autoSegmentFile(file.buffer, file.mimetype);
+
+        res.status(200).json({
+            message: "Document auto-segmentation completed",
+            model: process.env.LLM_MODEL || "gemini-3-flash-preview",
+            fileName: file.originalname,
+            mimeType: file.mimetype,
+            result
+        });
+
+    } catch (error) {
+        console.error("Auto-segment document error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Analyze document from URL
+app.post('/analyze-url', async (req, res) => {
+    try {
+        const { url, prompt, model } = req.body;
+
+        if (!url) {
+            return res.status(400).json({ error: "No URL provided" });
+        }
+
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(500).json({
+                error: "GEMINI_API_KEY not configured. Please set it in your .env file"
+            });
+        }
+
+        const defaultPrompt = "Summarize this document and extract key insights";
+        const content = await generateContentFromUrl(url, prompt || defaultPrompt, model);
+
+        res.status(200).json({
+            message: "URL document analyzed successfully",
+            model: model || process.env.LLM_MODEL || "gemini-3-flash-preview",
+            url,
+            content
+        });
+
+    } catch (error) {
+        console.error("Analyze URL error:", error);
         res.status(500).json({ error: error.message });
     }
 });

@@ -68,7 +68,99 @@ curl -X POST http://localhost:4000/audit-request \
 }
 ```
 
-### 3. Auto-Segment (Gemini AI)
+### 3. Analyze Document - File Upload (Gemini AI)
+Analyze uploaded documents (PDFs, images, etc.) using Gemini's multimodal capabilities.
+
+- **URL**: `/analyze-document`
+- **Method**: `POST`
+- **Content-Type**: `multipart/form-data`
+
+#### Request Body (form-data)
+- `file` (required): Document file (PDF, PNG, JPG, etc.)
+- `prompt` (optional): Analysis prompt (default: "Summarize this document and extract key insights")
+- `model` (optional): Model to use
+
+#### Example Request (cURL)
+```bash
+curl -X POST http://localhost:4000/analyze-document \
+  -F "file=@/path/to/document.pdf" \
+  -F "prompt=Summarize this document"
+```
+
+#### Success Response (200 OK)
+```json
+{
+  "message": "Document analyzed successfully",
+  "model": "gemini-3-flash-preview",
+  "fileName": "document.pdf",
+  "mimeType": "application/pdf",
+  "content": "AI-generated analysis..."
+}
+```
+
+### 4. Auto-Segment Document (Gemini AI)
+Automatically segment uploaded documents into logical sections.
+
+- **URL**: `/auto-segment-document`
+- **Method**: `POST`
+- **Content-Type**: `multipart/form-data`
+
+#### Request Body (form-data)
+- `file` (required): Document file to segment
+
+#### Example Request (cURL)
+```bash
+curl -X POST http://localhost:4000/auto-segment-document \
+  -F "file=@/path/to/document.pdf"
+```
+
+#### Success Response (200 OK)
+```json
+{
+  "message": "Document auto-segmentation completed",
+  "model": "gemini-3-flash-preview",
+  "fileName": "document.pdf",
+  "mimeType": "application/pdf",
+  "result": {
+    "segments": [...]
+  }
+}
+```
+
+### 5. Analyze Document from URL (Gemini AI)
+Fetch and analyze a document from a URL.
+
+- **URL**: `/analyze-url`
+- **Method**: `POST`
+- **Content-Type**: `application/json`
+
+#### Request Body
+```json
+{
+  "url": "https://example.com/document.pdf",
+  "prompt": "Summarize this document",  // optional
+  "model": "gemini-3-flash-preview"     // optional
+}
+```
+
+#### Example Request (cURL)
+```bash
+curl -X POST http://localhost:4000/analyze-url \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/doc.pdf", "prompt": "What are the key findings?"}'
+```
+
+#### Success Response (200 OK)
+```json
+{
+  "message": "URL document analyzed successfully",
+  "model": "gemini-3-flash-preview",
+  "url": "https://...",
+  "content": "AI-generated summary..."
+}
+```
+
+### 6. Auto-Segment Text (Gemini AI)
 Analyze and segment text content into logical sections using Gemini AI.
 
 - **URL**: `/auto-segment`
@@ -107,7 +199,7 @@ curl -X POST http://localhost:4000/auto-segment \
 }
 ```
 
-### 4. Generate Content (Gemini AI)
+### 7. Generate Content (Gemini AI)
 Generate content based on any prompt using Gemini AI.
 
 - **URL**: `/generate`
