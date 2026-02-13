@@ -1,10 +1,12 @@
 
 import express from 'express';
+import cors from 'cors';
 import { createPublicClient, createWalletClient, http, custom, keccak256, toHex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { Storage } from '@google-cloud/storage';
 import multer from 'multer';
 import dotenv from 'dotenv';
+import { autoSegment, generateContent } from './services/geminiService.js';
 
 dotenv.config();
 
@@ -59,7 +61,13 @@ const YOUR_CONTRACT_ABI = [
 ];
 
 const app = express();
+app.use(cors());
 app.use(express.json());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'OK', message: 'Server is running' });
+});
 
 app.post('/audit-request', upload.single('contextFile'), async (req, res) => {
     try {
@@ -120,7 +128,66 @@ app.post('/audit-request', upload.single('contextFile'), async (req, res) => {
     }
 });
 
+// Auto-segment endpoint using Gemini AI
+app.post('/auto-segment', async (req, res) => {
+    try {
+        const { text } = req.body;
+
+        if (!text) {
+            return res.status(400).json({ error: "No text provided for segmentation" });
+        }
+
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(500).json({
+                error: "GEMINI_API_KEY not configured. Please set it in your .env file"
+            });
+        }
+
+        const result = await autoSegment(text);
+
+        res.status(200).json({
+            message: "Auto-segmentation completed",
+            model: process.env.LLM_MODEL || "gemini-3-flash-preview",
+            result
+        });
+
+    } catch (error) {
+        console.error("Auto-segment error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// General AI generation endpoint
+app.post('/generate', async (req, res) => {
+    try {
+        const { prompt, model } = req.body;
+
+        if (!prompt) {
+            return res.status(400).json({ error: "No prompt provided" });
+        }
+
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(500).json({
+                error: "GEMINI_API_KEY not configured. Please set it in your .env file"
+            });
+        }
+
+        const content = await generateContent(prompt, model);
+
+        res.status(200).json({
+            message: "Content generated successfully",
+            model: model || process.env.LLM_MODEL || "gemini-3-flash-preview",
+            content
+        });
+
+    } catch (error) {
+        console.error("Generate error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    console.log(`LLM Model: ${process.env.LLM_MODEL || 'gemini-3-flash-preview'}`);
 });

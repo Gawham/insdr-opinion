@@ -1,13 +1,29 @@
 # Opinion Backend
 
-This backend provides a single endpoint to submit "Thinking Optimization" audit requests. It handles file uploads, hashes the content, stores the file in Google Cloud Storage, and records the request on the Etherlink Shadownet blockchain.
+This backend provides endpoints for:
+1. **Audit Requests** - Submit "Thinking Optimization" audit requests with file uploads, hashing, GCS storage, and Etherlink blockchain recording
+2. **Gemini AI Integration** - Auto-segment text and generate content using Google's Gemini AI
 
 ## Base URL
-- Local: `http://localhost:3000`
+- Local: `http://localhost:4000`
 
 ## Endpoints
 
-### 1. Submit Audit Request
+### 1. Health Check
+Simple endpoint to verify the server is running.
+
+- **URL**: `/health`
+- **Method**: `GET`
+
+#### Success Response (200 OK)
+```json
+{
+  "status": "OK",
+  "message": "Server is running"
+}
+```
+
+### 2. Submit Audit Request
 Submit a context file and LLM output for audit.
 
 - **URL**: `/audit-request`
@@ -24,7 +40,7 @@ Submit a context file and LLM output for audit.
 #### Example Request (cURL)
 
 ```bash
-curl -X POST http://localhost:3000/audit-request \
+curl -X POST http://localhost:4000/audit-request \
   -F "contextFile=@/path/to/your/document.pdf" \
   -F "llmOutput=The summary of the document is..." \
   -F "modelId=gpt-4-turbo"
@@ -52,6 +68,76 @@ curl -X POST http://localhost:3000/audit-request \
 }
 ```
 
+### 3. Auto-Segment (Gemini AI)
+Analyze and segment text content into logical sections using Gemini AI.
+
+- **URL**: `/auto-segment`
+- **Method**: `POST`
+- **Content-Type**: `application/json`
+
+#### Request Body
+```json
+{
+  "text": "Your text content to analyze and segment..."
+}
+```
+
+#### Example Request (cURL)
+```bash
+curl -X POST http://localhost:4000/auto-segment \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Your long text here..."}'
+```
+
+#### Success Response (200 OK)
+```json
+{
+  "message": "Auto-segmentation completed",
+  "model": "gemini-3-flash-preview",
+  "result": {
+    "segments": [
+      {
+        "title": "Section Title",
+        "summary": "Brief summary",
+        "key_points": ["Point 1", "Point 2"],
+        "sentiment": "positive"
+      }
+    ]
+  }
+}
+```
+
+### 4. Generate Content (Gemini AI)
+Generate content based on any prompt using Gemini AI.
+
+- **URL**: `/generate`
+- **Method**: `POST`
+- **Content-Type**: `application/json`
+
+#### Request Body
+```json
+{
+  "prompt": "Your prompt here",
+  "model": "gemini-3-flash-preview"  // optional
+}
+```
+
+#### Example Request (cURL)
+```bash
+curl -X POST http://localhost:4000/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Explain blockchain in simple terms"}'
+```
+
+#### Success Response (200 OK)
+```json
+{
+  "message": "Content generated successfully",
+  "model": "gemini-3-flash-preview",
+  "content": "Generated AI response..."
+}
+```
+
 ## Setup & Running
 
 1.  **Dependencies**:
@@ -59,13 +145,24 @@ curl -X POST http://localhost:3000/audit-request \
     npm install
     ```
 2.  **Configuration**:
-    Ensure `.env` contains:
+    Copy `.env.example` to `.env` and configure:
+
+    **Blockchain & Storage:**
     -   `PRIVATE_KEY` (Wallet private key)
+    -   `CONTRACT_ADDRESS` (Deployed contract address)
     -   `GCP_KEYFILE_PATH` (Path to service account JSON)
     -   `GCP_PROJECT_ID`
     -   `BUCKET_NAME`
-    -   `CONTRACT_ADDRESS`
+
+    **Gemini AI:**
+    -   `GEMINI_API_KEY` (Get from [Google AI Studio](https://aistudio.google.com/app/apikey))
+    -   `LLM_MODEL` (Default: `gemini-3-flash-preview`)
 3.  **Start Server**:
     ```bash
     node server.js
     ```
+
+## Documentation
+
+- **[Gemini Integration Guide](./GEMINI_INTEGRATION.md)** - Detailed documentation for Gemini AI features
+- **[Environment Setup](./.env.example)** - Example environment configuration
