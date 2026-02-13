@@ -1,0 +1,35 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_24-f6ed1e12fcc7f213c766278e5086d11695913c48",
+  "solcVersion": "0.8.24",
+  "solcLongVersion": "0.8.24+commit.e11b9ed9",
+  "userSourceNameMap": {
+    "contracts/OpinionAudit.sol": "project/contracts/OpinionAudit.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "shanghai",
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers",
+            "metadata"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/OpinionAudit.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.24;\n\ncontract OpinionAudit {\n    struct Request {\n        bytes32 requestId;\n        bytes32 contextHash;\n        string modelId;\n        bytes32 outputHash;\n        address requester;\n        uint256 timestamp;\n    }\n\n    mapping(bytes32 => Request) public requests;\n    bytes32[] public requestIds;\n\n    event RequestSubmitted(\n        bytes32 indexed requestId,\n        bytes32 contextHash,\n        string modelId,\n        bytes32 outputHash,\n        address requester\n    );\n\n    function submitRequest(bytes32 _contextHash, string calldata _modelId, bytes32 _outputHash) external returns (bytes32) {\n        bytes32 requestId = keccak256(abi.encodePacked(block.timestamp, msg.sender, _contextHash, _outputHash));\n        \n        requests[requestId] = Request({\n            requestId: requestId,\n            contextHash: _contextHash,\n            modelId: _modelId,\n            outputHash: _outputHash,\n            requester: msg.sender,\n            timestamp: block.timestamp\n        });\n        \n        requestIds.push(requestId);\n        \n        emit RequestSubmitted(requestId, _contextHash, _modelId, _outputHash, msg.sender);\n        \n        return requestId;\n    }\n\n    function getRequest(bytes32 _requestId) external view returns (Request memory) {\n        return requests[_requestId];\n    }\n}\n"
+      }
+    }
+  }
+}

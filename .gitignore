@@ -1,23 +1,39 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-
-# Dependency directories
+# Dependencies
 node_modules/
-**/node_modules/
 
-# Optional npm cache
-.npm
-
-# Environment files
+# Environment variables
 .env
 .env.local
+.env.*.local
 
+# Build artifacts
+artifacts/
+cache/
+typechain-types/
 
-# Build directories
-dist/
-build/
-# Next.js build output
-.next/
-out/
+# Hardhat files
+coverage/
+coverage.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
