@@ -1,65 +1,25 @@
 {
   "projectId": 3,
-  "lastUpdated": "2026-02-14T07:33:28.240Z",
+  "lastUpdated": "2026-02-14T07:57:22.220Z",
   "blockchainActions": [
     {
       "action": "create_project",
-      "transactionHash": "0x6df6f9fad2a2fa7d6bb90e7101e296fbc1d51e6fbb16e22379bfb7f5b36b7aa2",
-      "blockNumber": "2716423",
+      "transactionHash": "0x2eabf4293e907a054a50df71def5dffee15025e9f21fc22cd3f17451554b7329",
+      "blockNumber": "2716723",
       "from": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
-      "to": "0xb465cdc6de096432450d1776976eecaf5eeff4a5",
+      "to": "0x4c319e7b0e9d2d2b4d4b54497761e2611657fb6f",
       "status": "success",
-      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x6df6f9fad2a2fa7d6bb90e7101e296fbc1d51e6fbb16e22379bfb7f5b36b7aa2",
-      "timestamp": "2026-02-14T07:33:28.241Z"
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x2eabf4293e907a054a50df71def5dffee15025e9f21fc22cd3f17451554b7329",
+      "timestamp": "2026-02-14T07:57:22.222Z"
     },
     {
       "action": "sign_contract",
-      "transactionHash": "0x2fe451797cc5b7546cbfae2e30cf70922d58faed564b96e714eb91dcbf99bdca",
-      "negotiationTermsHash": "0x3f9e9566c0e83b16afc787f1523fa2a6d659d9d9a5f13a7de6efad30d20cb8c1",
-      "aiPromptHash": "0xfb0a9f335a2651b17829c8f73cdb1c4e4abba488315aaab70d641ba38cd55875",
+      "transactionHash": "0x0f39d9d8634af22ad2b7965e669df10403b5854a9e4a743d01276ea57f3323af",
+      "negotiationTermsHash": "0xb48d38f93eaa084033fc5970bf96e559c33c4cdc07d889ab00b4d63f9590739d",
+      "aiPromptHash": "0x306b3f95ba55e5fd0b230a2404154a0cfd2262ac856853678249c7ab616f3762",
       "status": "pending",
-      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x2fe451797cc5b7546cbfae2e30cf70922d58faed564b96e714eb91dcbf99bdca",
-      "timestamp": "2026-02-14T07:34:42.264Z"
-    },
-    {
-      "action": "fund_escrow",
-      "transactionHash": "0xc37024946e8aa1ab906497a6d53304f561b5b8329b2f58a97fb551f3d845cde9",
-      "value": "25000000000000000",
-      "status": "pending",
-      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0xc37024946e8aa1ab906497a6d53304f561b5b8329b2f58a97fb551f3d845cde9",
-      "timestamp": "2026-02-14T07:34:49.227Z"
-    },
-    {
-      "action": "ai_audit_complete",
-      "filename": "verify_upload_api.sh",
-      "fileSize": 1780,
-      "auditResults": [
-        {
-          "auditIndex": 1,
-          "passed": false,
-          "transactionHash": "0xed4274fe08fef75c3729260b0913389749c744b0384f22b79c9ec851946cac83"
-        },
-        {
-          "auditIndex": 2,
-          "passed": false,
-          "transactionHash": "0x3830fddb8519fb3667742c838c9ccbbe1398f8fd18e325f741720369d8beeb0e"
-        },
-        {
-          "auditIndex": 3,
-          "passed": false,
-          "transactionHash": "0xa1f261f18841fde1c2e529d149e39f6a363e4ae91cbdb519b38ac8c6ae68a59e"
-        }
-      ],
-      "auditTransactions": [
-        "0xed4274fe08fef75c3729260b0913389749c744b0384f22b79c9ec851946cac83",
-        "0x3830fddb8519fb3667742c838c9ccbbe1398f8fd18e325f741720369d8beeb0e",
-        "0xa1f261f18841fde1c2e529d149e39f6a363e4ae91cbdb519b38ac8c6ae68a59e"
-      ],
-      "consensusReached": false,
-      "passCount": 0,
-      "decision": "REJECTED",
-      "status": "pending",
-      "timestamp": "2026-02-14T07:37:19.960Z"
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x0f39d9d8634af22ad2b7965e669df10403b5854a9e4a743d01276ea57f3323af",
+      "timestamp": "2026-02-14T08:01:28.397Z"
     }
   ],
   "clientAddress": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
@@ -67,26 +27,18 @@
   "messages": [
     {
       "sender": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
-      "content": "I want a python file that prints hello world and im spesific on it being a .py file submission ",
+      "content": "i want python code that prints hello world and spesifically a .py file ",
       "senderRole": "client",
-      "timestamp": "2026-02-14T07:34:19.235Z"
+      "timestamp": "2026-02-14T08:01:05.345Z"
     }
   ],
   "terms": {
-    "projectDescription": "A Python program that prints 'Hello World'.",
-    "deliverables": [
-      "A Python file that prints 'Hello World'."
-    ],
-    "additionalTerms": [
-      "The submission must be a .py file."
-    ],
-    "paymentAmount": "0.025 XTZ",
-    "deadline": "1771871400",
     "escrowAmount": "25000000000000000",
-    "aiEvaluationPrompt": "You are an AI auditor evaluating code submission for a development project.\n\nPROJECT REQUIREMENTS:\n{\n  \"projectDescription\": \"A Python program that prints 'Hello World'.\",\n  \"deliverables\": [\n    \"A Python file that prints 'Hello World'.\"\n  ],\n  \"additionalTerms\": [\n    \"The submission must be a .py file.\"\n  ],\n  \"paymentAmount\": \"0.025 XTZ\",\n  \"deadline\": \"24/02/2026\"\n}\n\nEVALUATION CRITERIA:\n- Does the code repository contain all required features?\n- Are all deliverables implemented according to specifications?\n- Is the code quality acceptable (no major bugs, follows best practices)?\n- Does the submission meet the deadline requirements?\n\nAnalyze the submitted code repository and respond with:\n1. PASS or FAIL\n2. Detailed reasoning for your decision\n3. List of completed requirements\n4. List of missing or incomplete requirements (if any)\n\nBe strict but fair in your evaluation.",
-    "aiPromptHash": "0xfb0a9f335a2651b17829c8f73cdb1c4e4abba488315aaab70d641ba38cd55875",
-    "negotiationTermsHash": "0x3f9e9566c0e83b16afc787f1523fa2a6d659d9d9a5f13a7de6efad30d20cb8c1"
+    "deadline": "1771957800",
+    "aiEvaluationPrompt": "You are an AI auditor evaluating code submission for a development project.\n\nPROJECT REQUIREMENTS:\n{}\n\nEVALUATION CRITERIA:\n- Does the code repository contain all required features?\n- Are all deliverables implemented according to specifications?\n- Is the code quality acceptable (no major bugs, follows best practices)?\n- Does the submission meet the deadline requirements?\n\nAnalyze the submitted code repository and respond with:\n1. PASS or FAIL\n2. Detailed reasoning for your decision\n3. List of completed requirements\n4. List of missing or incomplete requirements (if any)\n\nBe strict but fair in your evaluation.",
+    "aiPromptHash": "0x306b3f95ba55e5fd0b230a2404154a0cfd2262ac856853678249c7ab616f3762",
+    "negotiationTermsHash": "0xb48d38f93eaa084033fc5970bf96e559c33c4cdc07d889ab00b4d63f9590739d"
   },
   "status": "finalized",
-  "finalizedAt": "2026-02-14T07:34:42.262Z"
+  "finalizedAt": "2026-02-14T08:01:28.393Z"
 }

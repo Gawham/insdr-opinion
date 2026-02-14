@@ -1,33 +1,97 @@
 {
   "projectId": 2,
-  "lastUpdated": "2026-02-14T07:29:51.491Z",
+  "lastUpdated": "2026-02-14T08:07:29.264Z",
   "blockchainActions": [
     {
       "action": "create_project",
-      "transactionHash": "0x46ea11327d3eb47bca31836cdc06184166bb771923693561c9548f055016d5e6",
-      "blockNumber": "2716378",
+      "transactionHash": "0x292366b6d2623a62a182f729f2708ebee5d37d9687bd7c12e9bfc5a30e9fa9e2",
+      "blockNumber": "2716857",
       "from": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
-      "to": "0xb465cdc6de096432450d1776976eecaf5eeff4a5",
+      "to": "0xa22496d8cd80967b6ebcf5d75ae7e32dd2b2d1b3",
       "status": "success",
-      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x46ea11327d3eb47bca31836cdc06184166bb771923693561c9548f055016d5e6",
-      "timestamp": "2026-02-14T07:29:51.493Z"
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x292366b6d2623a62a182f729f2708ebee5d37d9687bd7c12e9bfc5a30e9fa9e2",
+      "timestamp": "2026-02-14T08:07:29.266Z"
     },
     {
       "action": "sign_contract",
-      "transactionHash": "0xea771d5a1006f9b9e68696ade66c68cbcdefbd5862211144b3b1b49780931a02",
-      "negotiationTermsHash": "0x13a2332eb275e6e6c0f5b5b346007bf243f1bc6e4ff434e89512d8538190ecb5",
-      "aiPromptHash": "0xef7c370c5696b59c458e96eeb516fa5cf994314afb9cc965b235b32cd93477ab",
+      "transactionHash": "0x556dd6527e0e1dce1da260a06e92bc9c5219c415fc48f4614d1d81a859e2d6c5",
+      "negotiationTermsHash": "0x662770bb8d58a5d012048d9909f98332268c4981ec57de0678603760da40c96f",
+      "aiPromptHash": "0xb6ab17ae1308d4cd98adb650da8f3021612a45d4b4972b3800693dae9024d0f6",
       "status": "pending",
-      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0xea771d5a1006f9b9e68696ade66c68cbcdefbd5862211144b3b1b49780931a02",
-      "timestamp": "2026-02-14T07:30:37.735Z"
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x556dd6527e0e1dce1da260a06e92bc9c5219c415fc48f4614d1d81a859e2d6c5",
+      "timestamp": "2026-02-14T08:08:19.252Z"
     },
     {
       "action": "fund_escrow",
-      "transactionHash": "0x6733bf8a77bbaabfaf4b3c64f177c3a8f8f3384fadab2a770a5a23192f87f3e6",
+      "transactionHash": "0xdeb7f0b47e54c64a4a6da98e2989b224462eda4730bc0a9880f47153aa538489",
       "value": "25000000000000000",
       "status": "pending",
-      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x6733bf8a77bbaabfaf4b3c64f177c3a8f8f3384fadab2a770a5a23192f87f3e6",
-      "timestamp": "2026-02-14T07:30:52.846Z"
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0xdeb7f0b47e54c64a4a6da98e2989b224462eda4730bc0a9880f47153aa538489",
+      "timestamp": "2026-02-14T08:08:39.735Z"
+    },
+    {
+      "action": "ai_audit_complete",
+      "filename": "verify_upload_api.sh",
+      "fileSize": 1780,
+      "auditResults": [
+        {
+          "auditIndex": 1,
+          "passed": false,
+          "transactionHash": "0x828e7ef6dd4c20bd1dcf34c241b21601b5badf7fc68df152bdadccec03875f18"
+        },
+        {
+          "auditIndex": 2,
+          "passed": false,
+          "transactionHash": "0xade63ae25463f94af444e677d0be590192f3501c4b547eb25947930694905ed7"
+        },
+        {
+          "auditIndex": 3,
+          "passed": false,
+          "transactionHash": "0xbcb96a71af129bee6b7cdc800d8465f9f0a75c5b6386f6440827f67ee4d0afbc"
+        }
+      ],
+      "auditTransactions": [
+        "0x828e7ef6dd4c20bd1dcf34c241b21601b5badf7fc68df152bdadccec03875f18",
+        "0xade63ae25463f94af444e677d0be590192f3501c4b547eb25947930694905ed7",
+        "0xbcb96a71af129bee6b7cdc800d8465f9f0a75c5b6386f6440827f67ee4d0afbc"
+      ],
+      "consensusReached": false,
+      "passCount": 0,
+      "decision": "REJECTED",
+      "status": "pending",
+      "timestamp": "2026-02-14T08:09:31.293Z"
+    },
+    {
+      "action": "ai_audit_complete",
+      "filename": "hello.py",
+      "fileSize": 21,
+      "auditResults": [
+        {
+          "auditIndex": 1,
+          "passed": true,
+          "transactionHash": "0x3b585f69a481c3f73d6c7773234ad2c0832e2439a1dd0333e58def987460b302"
+        },
+        {
+          "auditIndex": 2,
+          "passed": true,
+          "transactionHash": "0x452390a50781c38fe57ed8a528bc0be37d164a6256d0149ed4ea7488fe90e90a"
+        },
+        {
+          "auditIndex": 3,
+          "passed": true,
+          "transactionHash": "0x7a422832456c8b2d19ca5cdb99bcb27ef3bb3d99d24a0c060697dbcca8058734"
+        }
+      ],
+      "auditTransactions": [
+        "0x3b585f69a481c3f73d6c7773234ad2c0832e2439a1dd0333e58def987460b302",
+        "0x452390a50781c38fe57ed8a528bc0be37d164a6256d0149ed4ea7488fe90e90a",
+        "0x7a422832456c8b2d19ca5cdb99bcb27ef3bb3d99d24a0c060697dbcca8058734"
+      ],
+      "consensusReached": true,
+      "passCount": 3,
+      "decision": "APPROVED",
+      "status": "pending",
+      "timestamp": "2026-02-14T08:10:37.227Z"
     }
   ],
   "clientAddress": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
@@ -35,27 +99,26 @@
   "messages": [
     {
       "sender": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
-      "content": "i want a python file that prints hellow world im very spesific on iot beign a .py fiel submission\n",
+      "content": "I want a python file that prints hello world and im very spesficac abotiu wantign a .py file",
       "senderRole": "client",
-      "timestamp": "2026-02-14T07:30:17.511Z"
+      "timestamp": "2026-02-14T08:07:51.688Z"
     }
   ],
   "terms": {
-    "projectDescription": "A Python program that prints 'hello world'.",
+    "projectDescription": "A Python file to print 'hello world'.",
     "deliverables": [
-      "A functional Python file",
-      "The file must output 'hello world'"
+      "Python file that prints 'hello world'"
     ],
     "additionalTerms": [
-      "The submission must be a .py file."
+      "File must have a .py extension."
     ],
     "paymentAmount": "0.025 XTZ",
     "deadline": "1771957800",
     "escrowAmount": "25000000000000000",
-    "aiEvaluationPrompt": "You are an AI auditor evaluating code submission for a development project.\n\nPROJECT REQUIREMENTS:\n{\n  \"projectDescription\": \"A Python program that prints 'hello world'.\",\n  \"deliverables\": [\n    \"A functional Python file\",\n    \"The file must output 'hello world'\"\n  ],\n  \"additionalTerms\": [\n    \"The submission must be a .py file.\"\n  ],\n  \"paymentAmount\": \"0.025 XTZ\",\n  \"deadline\": \"25/02/2026\"\n}\n\nEVALUATION CRITERIA:\n- Does the code repository contain all required features?\n- Are all deliverables implemented according to specifications?\n- Is the code quality acceptable (no major bugs, follows best practices)?\n- Does the submission meet the deadline requirements?\n\nAnalyze the submitted code repository and respond with:\n1. PASS or FAIL\n2. Detailed reasoning for your decision\n3. List of completed requirements\n4. List of missing or incomplete requirements (if any)\n\nBe strict but fair in your evaluation.",
-    "aiPromptHash": "0xef7c370c5696b59c458e96eeb516fa5cf994314afb9cc965b235b32cd93477ab",
-    "negotiationTermsHash": "0x13a2332eb275e6e6c0f5b5b346007bf243f1bc6e4ff434e89512d8538190ecb5"
+    "aiEvaluationPrompt": "You are an AI auditor evaluating code submission for a development project.\n\nPROJECT REQUIREMENTS:\n{\n  \"projectDescription\": \"A Python file to print 'hello world'.\",\n  \"deliverables\": [\n    \"Python file that prints 'hello world'\"\n  ],\n  \"additionalTerms\": [\n    \"File must have a .py extension.\"\n  ],\n  \"paymentAmount\": \"0.025 XTZ\",\n  \"deadline\": \"25/02/2026\"\n}\n\nEVALUATION CRITERIA:\n- Does the code repository contain all required features?\n- Are all deliverables implemented according to specifications?\n- Is the code quality acceptable (no major bugs, follows best practices)?\n- Does the submission meet the deadline requirements?\n\nAnalyze the submitted code repository and respond with:\n1. PASS or FAIL\n2. Detailed reasoning for your decision\n3. List of completed requirements\n4. List of missing or incomplete requirements (if any)\n\nBe strict but fair in your evaluation.",
+    "aiPromptHash": "0xb6ab17ae1308d4cd98adb650da8f3021612a45d4b4972b3800693dae9024d0f6",
+    "negotiationTermsHash": "0x662770bb8d58a5d012048d9909f98332268c4981ec57de0678603760da40c96f"
   },
   "status": "finalized",
-  "finalizedAt": "2026-02-14T07:30:37.733Z"
+  "finalizedAt": "2026-02-14T08:08:19.249Z"
 }

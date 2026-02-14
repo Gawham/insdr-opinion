@@ -567,7 +567,10 @@ Be strict but fair in your evaluation.`;
                 args: [negotiationTermsHash, aiPromptHash, BigInt(escrowAmount), BigInt(deadline)],
             });
             console.log('✅ Transaction sent:', hash);
-            console.log('💾 Saving transaction hash (not waiting for confirmation)');
+            console.log('⏳ Waiting for transaction confirmation...');
+
+            receipt = await publicClient.waitForTransactionReceipt({ hash });
+            console.log('✅ Transaction confirmed in block:', receipt.blockNumber.toString());
         } else {
             console.log("🌐 Wallet Mode: Using frontend transaction");
             hash = transactionHash;
@@ -661,7 +664,10 @@ app.post('/gotham/fund-escrow/:projectId', async (req, res) => {
                 value: BigInt(escrowAmount),
             });
             console.log('✅ Transaction sent:', hash);
-            console.log('💾 Saving transaction hash (not waiting for confirmation)');
+            console.log('⏳ Waiting for transaction confirmation...');
+
+            receipt = await publicClient.waitForTransactionReceipt({ hash });
+            console.log('✅ Transaction confirmed in block:', receipt.blockNumber.toString());
         } else {
             console.log('🌐 Wallet Mode: Using frontend transaction');
             hash = transactionHash;
@@ -764,7 +770,7 @@ app.post('/gotham/submit-code/:projectId', upload.single('codeArchive'), async (
 
         const auditHashes = auditResults.map(result => keccak256(toHex(result)));
 
-        // Submit audit results to blockchain via factory (code hash not stored on-chain for speed)
+        // Submit audit results to blockchain via factory
         console.log('📝 Submitting audit results to blockchain via factory...');
         const txHashes = [];
         for (let i = 0; i < 3; i++) {

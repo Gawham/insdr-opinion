@@ -135,9 +135,9 @@ export const PROJECT_ESCROW_ABI = [
                     { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
                     { "internalType": "bool", "name": "passed", "type": "bool" }
                 ],
-                "internalType": "struct ProjectEscrow.AuditResult[3]",
+                "internalType": "struct ProjectEscrow.AuditResult[]",
                 "name": "",
-                "type": "tuple[3]"
+                "type": "tuple[]"
             }
         ],
         "stateMutability": "view",
