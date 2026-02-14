@@ -1,0 +1,95 @@
+{
+  "projectId": 6,
+  "lastUpdated": "2026-02-14T16:49:00.959Z",
+  "blockchainActions": [
+    {
+      "action": "create_project",
+      "transactionHash": "0x5f23fb59d5deb2f6d9168822a6589088e7796c03257f9d78b02027994a6f6de1",
+      "blockNumber": "2723434",
+      "from": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
+      "to": "0xd2fc1be6eb656355b4f39a2336bc48a23b4b5136",
+      "status": "success",
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x5f23fb59d5deb2f6d9168822a6589088e7796c03257f9d78b02027994a6f6de1",
+      "timestamp": "2026-02-14T16:49:00.962Z"
+    },
+    {
+      "action": "sign_contract",
+      "transactionHash": "0x759638c178c8eadab552f6a598608250a6140bcf6704d74c88c0ee8ab9c2cc9d",
+      "negotiationTermsHash": "0xf96e20c7951c33bfd2c9292950f321fde57710073ce6dd9b21cb17b55ce5c9de",
+      "aiPromptHash": "0x779a64facd8d93df5710b8daf195ec4cae36681162f783cb600a14d6f581604e",
+      "status": "pending",
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x759638c178c8eadab552f6a598608250a6140bcf6704d74c88c0ee8ab9c2cc9d",
+      "timestamp": "2026-02-14T16:49:30.707Z"
+    },
+    {
+      "action": "fund_escrow",
+      "transactionHash": "0xb7b58e0c7b3f952031d09e84e7ece8e431b604f8ffe7228745c401ea6bfc073c",
+      "value": "25000000000000000",
+      "status": "pending",
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0xb7b58e0c7b3f952031d09e84e7ece8e431b604f8ffe7228745c401ea6bfc073c",
+      "timestamp": "2026-02-14T16:49:40.480Z"
+    },
+    {
+      "action": "ai_audit_complete",
+      "filename": "hello.py",
+      "fileSize": 21,
+      "auditResults": [
+        {
+          "auditIndex": 1,
+          "passed": true,
+          "decision": "PASS",
+          "reason": "The submission fulfills all requirements by providing a Python script that correctly prints 'hello world' ahead of the specified deadline.",
+          "hash": "0xeb475859b1ead9cc9be880de029545878b0d04ba44c690188ddb93152ce4138c"
+        },
+        {
+          "auditIndex": 2,
+          "passed": true,
+          "decision": "PASS",
+          "reason": "The submission meets all project requirements, including the correct Python code and adherence to the deadline.",
+          "hash": "0xc99de873a3441d627ca6da24b0fe98300514aec4856436fa89ba6888dc7bcba4"
+        },
+        {
+          "auditIndex": 3,
+          "passed": true,
+          "decision": "PASS",
+          "reason": "The submission correctly implements the required Python code to print 'hello world' and satisfies all project specifications.",
+          "hash": "0xe0f52e3242a238df0664ba4f8cb1f761e51173b6021eb867c6bd5fa1d6f9c232"
+        }
+      ],
+      "consensusHash": "0x286b8f42b3fd048ee56f646b734c3d48c458f078900a91c7c262220887c9361f",
+      "consensusTransaction": "0x7f4b33adf417d916d2446b6ef2dab3bb92e697521e0fd355f49f7c8506824e7c",
+      "consensusReached": true,
+      "passCount": 3,
+      "decision": "APPROVED",
+      "status": "pending",
+      "timestamp": "2026-02-14T16:50:08.598Z"
+    }
+  ],
+  "clientAddress": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
+  "developerAddress": "0xeDADc00AA45eABF76444EB2B496bD208c4c84104",
+  "messages": [
+    {
+      "sender": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
+      "content": " want a python file that prints hello world and im very spesficac abotiu wantign a .py file",
+      "senderRole": "client",
+      "timestamp": "2026-02-14T16:49:13.650Z"
+    }
+  ],
+  "terms": {
+    "projectDescription": "A Python program that prints 'hello world'.",
+    "deliverables": [
+      "A Python file"
+    ],
+    "additionalTerms": [
+      "File must have a .py extension"
+    ],
+    "paymentAmount": "0.025 XTZ",
+    "deadline": "1771871400",
+    "escrowAmount": "25000000000000000",
+    "aiEvaluationPrompt": "You are an AI auditor evaluating code submission for a development project.\n\nPROJECT REQUIREMENTS:\n{\n  \"projectDescription\": \"A Python program that prints 'hello world'.\",\n  \"deliverables\": [\n    \"A Python file\"\n  ],\n  \"additionalTerms\": [\n    \"File must have a .py extension\"\n  ],\n  \"paymentAmount\": \"0.025 XTZ\",\n  \"deadline\": \"24/02/2026\"\n}\n\nEVALUATION CRITERIA:\n- Does the code repository contain all required features?\n- Are all deliverables implemented according to specifications?\n- Is the code quality acceptable (no major bugs, follows best practices)?\n- Does the submission meet the deadline requirements?\n\nRespond in EXACTLY this format:\nDECISION: [PASS or FAIL]\nREASON: [One sentence explaining your decision]\n\nBe strict but fair in your evaluation.",
+    "aiPromptHash": "0x779a64facd8d93df5710b8daf195ec4cae36681162f783cb600a14d6f581604e",
+    "negotiationTermsHash": "0xf96e20c7951c33bfd2c9292950f321fde57710073ce6dd9b21cb17b55ce5c9de"
+  },
+  "status": "finalized",
+  "finalizedAt": "2026-02-14T16:49:30.706Z"
+}

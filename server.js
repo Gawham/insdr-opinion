@@ -4,7 +4,7 @@ import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
-import { createPublicClient, createWalletClient, http, custom, keccak256, toHex } from 'viem';
+import { createPublicClient, createWalletClient, http, custom, keccak256, toHex, decodeEventLog } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { Storage } from '@google-cloud/storage';
 import multer from 'multer';
@@ -1078,10 +1078,11 @@ app.get('/gotham/project/:projectId/audit-history', async (req, res) => {
         console.log('📖 Loading local audit details...');
         const negotiation = await loadNegotiation(parseInt(projectId));
 
-        // Find the audit action in blockchain actions
-        const auditAction = negotiation.blockchainActions?.find(
+        // Find the MOST RECENT audit action in blockchain actions (not the first one)
+        const auditActions = negotiation.blockchainActions?.filter(
             action => action.action === 'ai_audit_complete'
-        );
+        ) || [];
+        const auditAction = auditActions[auditActions.length - 1]; // Get last (most recent) audit
 
         // Prepare individual audit results (stored locally, not on-chain)
         let individualAudits = [];
@@ -1100,10 +1101,54 @@ app.get('/gotham/project/:projectId/audit-history', async (req, res) => {
         const passedAudits = submitted ? (passed ? 3 : individualAudits.filter(a => a.passed).length) : 0;
         const failedAudits = submitted ? (totalAudits - passedAudits) : 0;
 
+        // Check for payment release (if consensus passed)
+        let paymentInfo = null;
+        if (passed && submitted && auditAction?.consensusTransaction) {
+            try {
+                console.log('💰 Checking for payment release in consensus transaction...');
+                const receipt = await publicClient.getTransactionReceipt({
+                    hash: auditAction.consensusTransaction
+                });
+
+                // Parse logs to find PaymentReleased event
+                for (const log of receipt.logs) {
+                    try {
+                        const decoded = decodeEventLog({
+                            abi: PROJECT_ESCROW_ABI,
+                            data: log.data,
+                            topics: log.topics
+                        });
+
+                        if (decoded.eventName === 'PaymentReleased') {
+                            paymentInfo = {
+                                released: true,
+                                recipient: decoded.args.developer,
+                                amount: decoded.args.amount.toString(),
+                                transactionHash: auditAction.consensusTransaction,
+                                timestamp: timestamp ? new Date(Number(timestamp) * 1000).toISOString() : null,
+                                note: 'Internal transfer within consensus transaction',
+                                explorerUrl: `https://shadownet.explorer.etherlink.com/tx/${auditAction.consensusTransaction}`
+                            };
+                            console.log('   ✅ Payment released:', (Number(decoded.args.amount) / 1e18).toFixed(4), 'XTZ');
+                            console.log('   📍 To developer:', decoded.args.developer);
+                            break;
+                        }
+                    } catch (e) {
+                        // Not a PaymentReleased event, continue
+                    }
+                }
+            } catch (error) {
+                console.error('   ⚠️  Could not fetch payment details:', error.message);
+            }
+        }
+
         console.log('✅ Consensus history retrieved');
         console.log('   Blockchain Consensus:', submitted ? (passed ? 'APPROVED ✅' : 'REJECTED ❌') : 'PENDING ⏳');
         console.log('   Individual Audits (local):', individualAudits.length);
         console.log('   Passed:', passedAudits, '/ Failed:', failedAudits);
+        if (paymentInfo) {
+            console.log('   Payment Released: ✅');
+        }
         console.log('=========================================\n');
 
         res.status(200).json({
@@ -1114,8 +1159,13 @@ app.get('/gotham/project/:projectId/audit-history', async (req, res) => {
                 hash: consensusHash,
                 timestamp: timestamp ? new Date(Number(timestamp) * 1000).toISOString() : null,
                 passed,
-                submitted
+                submitted,
+                transactionHash: auditAction?.consensusTransaction || null,
+                explorerUrl: auditAction?.consensusTransaction ?
+                    `https://shadownet.explorer.etherlink.com/tx/${auditAction.consensusTransaction}` : null
             },
+            // Payment information (if released)
+            payment: paymentInfo,
             // Individual audits (from local storage)
             audits: individualAudits,
             summary: {

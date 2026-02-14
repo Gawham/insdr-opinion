@@ -145,5 +145,14 @@ export const PROJECT_ESCROW_ABI = [
         ],
         "name": "ConsensusSubmitted",
         "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            { "indexed": false, "internalType": "address", "name": "developer", "type": "address" },
+            { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
+        ],
+        "name": "PaymentReleased",
+        "type": "event"
     }
 ];
