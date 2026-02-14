@@ -37,3 +37,6 @@ yarn-error.log*
 
 # Optional eslint cache
 .eslintcache
+
+# Deployment files with secrets
+app.yaml

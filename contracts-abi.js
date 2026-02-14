@@ -58,10 +58,10 @@ export const GOTHAM_FACTORY_ABI = [
     {
         "inputs": [
             { "internalType": "uint256", "name": "_projectId", "type": "uint256" },
-            { "internalType": "bytes32", "name": "_auditHash", "type": "bytes32" },
+            { "internalType": "bytes32", "name": "_consensusHash", "type": "bytes32" },
             { "internalType": "bool", "name": "_passed", "type": "bool" }
         ],
-        "name": "submitAuditResult",
+        "name": "submitConsensus",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -101,10 +101,10 @@ export const PROJECT_ESCROW_ABI = [
     },
     {
         "inputs": [
-            { "internalType": "bytes32", "name": "_auditHash", "type": "bytes32" },
+            { "internalType": "bytes32", "name": "_consensusHash", "type": "bytes32" },
             { "internalType": "bool", "name": "_passed", "type": "bool" }
         ],
-        "name": "submitAuditResult",
+        "name": "submitConsensus",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -127,20 +127,23 @@ export const PROJECT_ESCROW_ABI = [
     },
     {
         "inputs": [],
-        "name": "getAuditResults",
+        "name": "getConsensusResult",
         "outputs": [
-            {
-                "components": [
-                    { "internalType": "bytes32", "name": "auditHash", "type": "bytes32" },
-                    { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
-                    { "internalType": "bool", "name": "passed", "type": "bool" }
-                ],
-                "internalType": "struct ProjectEscrow.AuditResult[]",
-                "name": "",
-                "type": "tuple[]"
-            }
+            { "internalType": "bytes32", "name": "_consensusHash", "type": "bytes32" },
+            { "internalType": "uint256", "name": "_timestamp", "type": "uint256" },
+            { "internalType": "bool", "name": "_passed", "type": "bool" },
+            { "internalType": "bool", "name": "_submitted", "type": "bool" }
         ],
         "stateMutability": "view",
         "type": "function"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            { "indexed": true, "internalType": "bytes32", "name": "consensusHash", "type": "bytes32" },
+            { "indexed": false, "internalType": "bool", "name": "passed", "type": "bool" }
+        ],
+        "name": "ConsensusSubmitted",
+        "type": "event"
     }
 ];

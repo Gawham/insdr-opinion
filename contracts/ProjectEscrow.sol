@@ -36,14 +36,14 @@ contract ProjectEscrow {
     bytes32 public negotiationTermsHash;     // Hash of final negotiation terms
     bytes32 public aiEvaluationPromptHash;   // Immutable AI evaluation prompt hash
 
-    // AI audit results (unlimited audits allowed)
-    struct AuditResult {
-        bytes32 auditHash;
+    // AI audit consensus (single result from 3 off-chain audits)
+    struct ConsensusResult {
+        bytes32 consensusHash;  // Combined hash of all 3 audit results
         uint256 timestamp;
         bool passed;
     }
-    AuditResult[] public auditResults;
-    uint8 public auditCount;
+    ConsensusResult public consensus;
+    // Removed: consensusSubmitted flag to allow multiple audit retries
 
     // Timestamps
     uint256 public createdAt;
@@ -56,7 +56,7 @@ contract ProjectEscrow {
     event ProjectCreated(uint256 indexed projectId, address client, address developer);
     event ContractSigned(bytes32 negotiationTermsHash, bytes32 aiPromptHash, uint256 deadline);
     event EscrowFunded(uint256 amount);
-    event AuditSubmitted(uint8 auditIndex, bytes32 auditHash, bool passed);
+    event ConsensusSubmitted(bytes32 consensusHash, bool passed);
     event PaymentReleased(address developer, uint256 amount);
     event ProjectCancelled();
     event DisputeRaised();
@@ -149,65 +149,48 @@ contract ProjectEscrow {
     }
 
     /**
-     * @notice Submit AI audit result (called by backend after code upload)
-     * @dev Automatically transitions to CodeSubmitted on first audit
-     * @param _auditHash Hash of the audit response
-     * @param _passed Whether audit passed
+     * @notice Submit AI consensus result (called by backend after 3 off-chain audits)
+     * @dev Automatically releases payment if consensus passes
+     * @param _consensusHash Combined hash of all 3 audit results
+     * @param _passed Whether consensus was reached (all 3 audits passed)
      */
-    function submitAuditResult(
-        bytes32 _auditHash,
+    function submitConsensus(
+        bytes32 _consensusHash,
         bool _passed
     ) external onlyFactory {
+        // Allow multiple submissions until audit passes
         require(
             status == ProjectStatus.Funded ||
             status == ProjectStatus.UnderDevelopment ||
             status == ProjectStatus.CodeSubmitted ||
             status == ProjectStatus.AuditFailed,
-            "Invalid status"
+            "Invalid status for audit submission"
         );
         require(block.timestamp <= deadline, "Deadline passed");
+        require(_consensusHash != bytes32(0), "Invalid hash");
 
-        // Auto-transition to CodeSubmitted on first audit or reset from AuditFailed
-        if (status != ProjectStatus.CodeSubmitted) {
+        // Update to CodeSubmitted if not already
+        if (status != ProjectStatus.CodeSubmitted && status != ProjectStatus.AuditFailed) {
             status = ProjectStatus.CodeSubmitted;
             submittedAt = block.timestamp;
         }
 
-        auditResults.push(AuditResult({
-            auditHash: _auditHash,
+        // Store latest consensus result
+        consensus = ConsensusResult({
+            consensusHash: _consensusHash,
             timestamp: block.timestamp,
             passed: _passed
-        }));
+        });
 
-        emit AuditSubmitted(auditCount, _auditHash, _passed);
-        auditCount++;
+        emit ConsensusSubmitted(_consensusHash, _passed);
 
-        // Auto-evaluate after every 3 audits
-        if (auditCount % 3 == 0) {
-            _evaluateAudits();
-        }
-    }
-
-    /**
-     * @notice Evaluate audit consensus and release payment if passed
-     * @dev Evaluates the last 3 audits, requires all 3 to pass (3/3 consensus)
-     */
-    function _evaluateAudits() private {
-        uint8 passCount = 0;
-        uint256 startIndex = auditCount >= 3 ? auditCount - 3 : 0;
-
-        for (uint256 i = startIndex; i < auditCount; i++) {
-            if (auditResults[i].passed) {
-                passCount++;
-            }
-        }
-
-        // Require unanimous consensus (3/3) for the last 3 audits
-        if (passCount == 3 && (auditCount - startIndex) == 3) {
+        // Auto-release payment if passed
+        if (_passed) {
             status = ProjectStatus.AuditPassed;
             _releasePayment();
         } else {
             status = ProjectStatus.AuditFailed;
+            // Developer can retry by submitting new code
         }
     }
 
@@ -291,10 +274,20 @@ contract ProjectEscrow {
     }
 
     /**
-     * @notice Get all audit results
+     * @notice Get consensus result
      */
-    function getAuditResults() external view returns (AuditResult[] memory) {
-        return auditResults;
+    function getConsensusResult() external view returns (
+        bytes32 _consensusHash,
+        uint256 _timestamp,
+        bool _passed,
+        bool _submitted
+    ) {
+        return (
+            consensus.consensusHash,
+            consensus.timestamp,
+            consensus.passed,
+            consensus.consensusHash != bytes32(0)
+        );
     }
 
     /**

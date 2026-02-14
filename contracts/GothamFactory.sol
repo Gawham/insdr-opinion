@@ -26,10 +26,9 @@ contract GothamFactory {
         address developer
     );
 
-    event AuditResultSubmitted(
+    event ConsensusSubmitted(
         uint256 indexed projectId,
         address indexed escrowContract,
-        uint8 auditIndex,
         bool passed
     );
 
@@ -66,28 +65,24 @@ contract GothamFactory {
     }
 
     /**
-     * @notice Submit AI audit result to a project
-     * @dev Called by backend after running AI audits
+     * @notice Submit AI consensus result to a project
+     * @dev Called by backend after running 3 AI audits off-chain
      * @param _projectId Project ID
-     * @param _auditHash Hash of the audit response
-     * @param _passed Whether the audit passed
+     * @param _consensusHash Combined hash of all 3 audit results
+     * @param _passed Whether consensus was reached (all 3 passed)
      */
-    function submitAuditResult(
+    function submitConsensus(
         uint256 _projectId,
-        bytes32 _auditHash,
+        bytes32 _consensusHash,
         bool _passed
     ) external {
         address escrowAddress = projects[_projectId];
         require(escrowAddress != address(0), "Project not found");
 
         ProjectEscrow escrow = ProjectEscrow(escrowAddress);
+        escrow.submitConsensus(_consensusHash, _passed);
 
-        // Get current audit count before submission
-        uint8 auditIndex = escrow.auditCount();
-
-        escrow.submitAuditResult(_auditHash, _passed);
-
-        emit AuditResultSubmitted(_projectId, escrowAddress, auditIndex, _passed);
+        emit ConsensusSubmitted(_projectId, escrowAddress, _passed);
     }
 
     /**

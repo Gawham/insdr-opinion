@@ -1,6 +1,9 @@
 
+// @ts-nocheck
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
 import { createPublicClient, createWalletClient, http, custom, keccak256, toHex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { Storage } from '@google-cloud/storage';
@@ -24,6 +27,12 @@ import { GOTHAM_FACTORY_ABI, PROJECT_ESCROW_ABI } from './contracts-abi.js';
 
 dotenv.config();
 
+// Type helper functions
+/** @param {string | undefined} addr */
+const asAddress = (addr) => /** @type {`0x${string}`} */(addr || '0x0');
+/** @param {string} str */
+const asHex = (str) => /** @type {`0x${string}`} */(str.startsWith('0x') ? str : `0x${str}`);
+
 // 1. Etherlink Chain Definition
 const etherlinkShadownet = {
     id: 127823,
@@ -38,8 +47,8 @@ const etherlinkShadownet = {
 };
 
 // 2. Client Initialization
-const clientAccount = privateKeyToAccount(process.env.PRIVATE_KEY);
-const developerAccount = privateKeyToAccount(process.env.DEVELOPER_PRIVATE_KEY);
+const clientAccount = privateKeyToAccount(`0x${process.env.PRIVATE_KEY?.replace(/^0x/, '')}`);
+const developerAccount = privateKeyToAccount(`0x${process.env.DEVELOPER_PRIVATE_KEY?.replace(/^0x/, '')}`);
 const publicClient = createPublicClient({ chain: etherlinkShadownet, transport: http() });
 const clientWalletClient = createWalletClient({ account: clientAccount, chain: etherlinkShadownet, transport: http() });
 const developerWalletClient = createWalletClient({ account: developerAccount, chain: etherlinkShadownet, transport: http() });
@@ -85,6 +94,18 @@ const YOUR_CONTRACT_ABI = [
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Helper function to parse AI audit response
+function parseAuditResponse(response) {
+    const decisionMatch = response.match(/DECISION:\s*(PASS|FAIL)/i);
+    const reasonMatch = response.match(/REASON:\s*(.+?)(?:\n|$)/i);
+
+    return {
+        decision: decisionMatch ? decisionMatch[1].toUpperCase() : 'FAIL',
+        reason: reasonMatch ? reasonMatch[1].trim() : 'No reason provided',
+        passed: decisionMatch && decisionMatch[1].toUpperCase() === 'PASS'
+    };
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -523,13 +544,16 @@ EVALUATION CRITERIA:
 - Is the code quality acceptable (no major bugs, follows best practices)?
 - Does the submission meet the deadline requirements?
 
-Analyze the submitted code repository and respond with:
-1. PASS or FAIL
-2. Detailed reasoning for your decision
-3. List of completed requirements
-4. List of missing or incomplete requirements (if any)
+Respond in EXACTLY this format:
+DECISION: [PASS or FAIL]
+REASON: [One sentence explaining your decision]
 
 Be strict but fair in your evaluation.`;
+
+        console.log('\n📋 GENERATED AUDIT CRITERIA:');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log(promptTemplate);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
         const aiPromptHash = keccak256(toHex(promptTemplate));
         const negotiationTermsHash = keccak256(toHex(JSON.stringify(finalTerms)));
@@ -736,27 +760,43 @@ app.post('/gotham/submit-code/:projectId', upload.single('codeArchive'), async (
 
         const aiPrompt = negotiation.terms.aiEvaluationPrompt;
         console.log('✅ AI prompt loaded');
+        console.log('\n📋 AUDIT CRITERIA:');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log(aiPrompt);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-        // Run 3 independent AI audits immediately
-        console.log('🤖 Running 3 independent AI audits...');
+        // Run 3 independent AI audits simultaneously
+        console.log('🤖 Starting 3 AI audits in parallel...');
+        const startTime = Date.now();
         const auditPromises = [
             generateContentFromFile(file.buffer, file.mimetype, aiPrompt),
             generateContentFromFile(file.buffer, file.mimetype, aiPrompt),
             generateContentFromFile(file.buffer, file.mimetype, aiPrompt)
         ];
+        console.log('   ⚡ Audit 1 started');
+        console.log('   ⚡ Audit 2 started');
+        console.log('   ⚡ Audit 3 started');
+        console.log('   ⏳ Waiting for all audits to complete...');
 
         const auditResults = await Promise.all(auditPromises);
-        console.log('✅ All audits completed');
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        console.log(`✅ All 3 audits completed in ${duration}s (ran in parallel)`);
+
+        // Parse audit results to extract decisions and reasons
+        const parsedAudits = auditResults.map(result => parseAuditResponse(result));
 
         // Analyze results for consensus
         console.log('📊 Analyzing audit results...');
-        const passCount = auditResults.filter(result =>
-            result.toLowerCase().includes('pass') && !result.toLowerCase().includes('fail')
-        ).length;
+        const passCount = parsedAudits.filter(audit => audit.passed).length;
 
         const consensusReached = passCount === 3; // All 3 must pass
         console.log(`   Pass count: ${passCount}/3`);
         console.log(`   Consensus: ${consensusReached ? '✅ REACHED (APPROVED)' : '❌ NOT REACHED (REJECTED)'}`);
+
+        // Log each audit decision and reason
+        parsedAudits.forEach((audit, i) => {
+            console.log(`   Audit ${i + 1}: ${audit.decision} - ${audit.reason}`);
+        });
 
         // Get escrow contract address
         console.log('📖 Reading escrow contract address...');
@@ -770,50 +810,56 @@ app.post('/gotham/submit-code/:projectId', upload.single('codeArchive'), async (
 
         const auditHashes = auditResults.map(result => keccak256(toHex(result)));
 
-        // Submit audit results to blockchain via factory
-        console.log('📝 Submitting audit results to blockchain via factory...');
-        const txHashes = [];
-        for (let i = 0; i < 3; i++) {
-            const passed = auditResults[i].toLowerCase().includes('pass') &&
-                         !auditResults[i].toLowerCase().includes('fail');
+        // Compute consensus OFF-CHAIN
+        console.log('📊 Computing consensus off-chain...');
+        const passResults = parsedAudits.map(audit => audit.passed);
 
+        passResults.forEach((passed, i) => {
             console.log(`   Audit ${i + 1}: ${passed ? 'PASS ✅' : 'FAIL ❌'}`);
-            console.log('   Using wallet:', clientAccount.address, '(CLIENT)');
+        });
 
-            const hash = await clientWalletClient.writeContract({
-                address: process.env.GOTHAM_FACTORY_ADDRESS,
-                abi: GOTHAM_FACTORY_ABI,
-                functionName: 'submitAuditResult',
-                args: [BigInt(projectId), auditHashes[i], passed],
-            });
-            console.log('   Transaction:', hash);
-            txHashes.push(hash);
-        }
-        console.log('✅ All audit results submitted to blockchain');
+        // Create combined consensus hash from all 3 audit hashes
+        const combinedHashInput = (auditHashes[0] || '') + (auditHashes[1]?.slice(2) || '') + (auditHashes[2]?.slice(2) || '');
+        const consensusHash = asHex(keccak256(asHex(combinedHashInput)));
+        console.log('   Consensus hash:', consensusHash);
 
-        // Prepare individual audit results
-        const auditResultDetails = auditResults.map((result, i) => ({
-            auditIndex: i + 1,
-            passed: result.toLowerCase().includes('pass') && !result.toLowerCase().includes('fail'),
-            transactionHash: txHashes[i]
-        }));
+        // Submit SINGLE consensus transaction to blockchain via FACTORY
+        console.log('📝 Submitting consensus to blockchain (1 transaction)...');
+        console.log('   Using wallet:', clientAccount.address, '(CLIENT)');
+        console.log('   Calling factory at:', process.env.GOTHAM_FACTORY_ADDRESS);
 
-        // Save blockchain actions
+        const hash = await clientWalletClient.writeContract({
+            address: asAddress(process.env.GOTHAM_FACTORY_ADDRESS),
+            abi: GOTHAM_FACTORY_ABI,
+            functionName: 'submitConsensus',
+            args: [BigInt(projectId), consensusHash, consensusReached],
+        });
+        console.log('✅ Consensus submitted to blockchain via factory');
+        console.log('   Transaction:', hash);
+
+        // Save blockchain action with all audit details (stored locally, not on-chain)
         await addBlockchainAction(parseInt(projectId), {
             action: 'ai_audit_complete',
             filename: file.originalname,
             fileSize: file.size,
-            auditResults: auditResultDetails,
-            auditTransactions: txHashes,
+            auditResults: passResults.map((passed, i) => ({
+                auditIndex: i + 1,
+                passed,
+                decision: parsedAudits[i].decision,
+                reason: parsedAudits[i].reason,
+                hash: auditHashes[i]
+            })),
+            consensusHash,
+            consensusTransaction: hash,
             consensusReached,
             passCount,
             decision: consensusReached ? 'APPROVED' : 'REJECTED',
             status: 'pending',
         });
 
-        console.log('✅ Code audited and results saved to blockchain');
+        console.log('✅ Code audited and consensus saved to blockchain');
         console.log('   Consensus:', consensusReached ? 'APPROVED ✅' : 'REJECTED ❌');
-        console.log('   Audit TXs:', txHashes.length);
+        console.log('   Blockchain TXs: 1 (down from 3)');
         console.log('========================================\n');
 
         res.status(200).json({
@@ -822,12 +868,14 @@ app.post('/gotham/submit-code/:projectId', upload.single('codeArchive'), async (
             consensusReached,
             passCount,
             decision: consensusReached ? 'APPROVED' : 'REJECTED',
-            auditTransactions: txHashes,
-            auditResults: auditResults.map((result, idx) => ({
-                auditIndex: idx,
+            consensusTransaction: hash,
+            consensusHash,
+            auditResults: parsedAudits.map((audit, idx) => ({
+                auditIndex: idx + 1,
                 hash: auditHashes[idx],
-                passed: result.toLowerCase().includes('pass') && !result.toLowerCase().includes('fail'),
-                summary: result.substring(0, 200) + '...'
+                decision: audit.decision,
+                passed: audit.passed,
+                reason: audit.reason
             }))
         });
 
@@ -869,27 +917,43 @@ app.post('/gotham/audit/:projectId', upload.single('codeArchive'), async (req, r
 
         const aiPrompt = negotiation.terms.aiEvaluationPrompt;
         console.log('✅ AI prompt loaded');
+        console.log('\n📋 AUDIT CRITERIA:');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log(aiPrompt);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-        // Run 3 independent AI audits
-        console.log('🤖 Running 3 independent AI audits...');
+        // Run 3 independent AI audits simultaneously
+        console.log('🤖 Starting 3 AI audits in parallel...');
+        const startTime = Date.now();
         const auditPromises = [
             generateContentFromFile(file.buffer, file.mimetype, aiPrompt),
             generateContentFromFile(file.buffer, file.mimetype, aiPrompt),
             generateContentFromFile(file.buffer, file.mimetype, aiPrompt)
         ];
+        console.log('   ⚡ Audit 1 started');
+        console.log('   ⚡ Audit 2 started');
+        console.log('   ⚡ Audit 3 started');
+        console.log('   ⏳ Waiting for all audits to complete...');
 
         const auditResults = await Promise.all(auditPromises);
-        console.log('✅ All audits completed');
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        console.log(`✅ All 3 audits completed in ${duration}s (ran in parallel)`);
+
+        // Parse audit results to extract decisions and reasons
+        const parsedAudits = auditResults.map(result => parseAuditResponse(result));
 
         // Analyze results for consensus
         console.log('📊 Analyzing audit results...');
-        const passCount = auditResults.filter(result =>
-            result.toLowerCase().includes('pass') && !result.toLowerCase().includes('fail')
-        ).length;
+        const passCount = parsedAudits.filter(audit => audit.passed).length;
 
         const consensusReached = passCount === 3; // All 3 must pass
         console.log(`   Pass count: ${passCount}/3`);
         console.log(`   Consensus: ${consensusReached ? '✅ REACHED' : '❌ NOT REACHED'}`);
+
+        // Log each audit decision and reason
+        parsedAudits.forEach((audit, i) => {
+            console.log(`   Audit ${i + 1}: ${audit.decision} - ${audit.reason}`);
+        });
 
         // Submit audit results to blockchain
         if (!process.env.GOTHAM_FACTORY_ADDRESS) {
@@ -909,28 +973,37 @@ app.post('/gotham/audit/:projectId', upload.single('codeArchive'), async (req, r
 
         const auditHashes = auditResults.map(result => keccak256(toHex(result)));
 
-        // Submit each audit result to the escrow contract
-        console.log('📝 Submitting audit results to blockchain...');
-        for (let i = 0; i < 3; i++) {
-            const passed = auditResults[i].toLowerCase().includes('pass') &&
-                         !auditResults[i].toLowerCase().includes('fail');
+        // Compute consensus OFF-CHAIN
+        console.log('📊 Computing consensus off-chain...');
+        const passResults = parsedAudits.map(audit => audit.passed);
 
+        passResults.forEach((passed, i) => {
             console.log(`   Audit ${i + 1}: ${passed ? 'PASS ✅' : 'FAIL ❌'}`);
-            console.log('   Using wallet:', clientAccount.address, '(CLIENT)');
+        });
 
-            const hash = await clientWalletClient.writeContract({
-                address: escrowAddress,
-                abi: PROJECT_ESCROW_ABI,
-                functionName: 'submitAuditResult',
-                args: [auditHashes[i], passed],
-            });
-            console.log('   Transaction:', hash);
-        }
-        console.log('✅ All audit results submitted to blockchain');
+        // Create combined consensus hash from all 3 audit hashes
+        const combinedHashInput = auditHashes[0] + auditHashes[1].slice(2) + auditHashes[2].slice(2);
+        const consensusHash = keccak256(combinedHashInput);
+        console.log('   Consensus hash:', consensusHash);
+
+        // Submit SINGLE consensus transaction to blockchain via FACTORY
+        console.log('📝 Submitting consensus to blockchain (1 transaction)...');
+        console.log('   Using wallet:', clientAccount.address, '(CLIENT)');
+        console.log('   Calling factory at:', process.env.GOTHAM_FACTORY_ADDRESS);
+
+        const hash = await clientWalletClient.writeContract({
+            address: asAddress(process.env.GOTHAM_FACTORY_ADDRESS),
+            abi: GOTHAM_FACTORY_ABI,
+            functionName: 'submitConsensus',
+            args: [BigInt(projectId), consensusHash, consensusReached],
+        });
+        console.log('✅ Consensus submitted to blockchain via factory');
+        console.log('   Transaction:', hash);
 
         console.log('✅ AI audit completed');
         console.log('   Consensus:', consensusReached ? 'REACHED ✅' : 'NOT REACHED ❌');
         console.log('   Pass count:', passCount, '/ 3');
+        console.log('   Blockchain TXs: 1 (down from 3)');
         console.log('==============\n');
 
         res.status(200).json({
@@ -938,11 +1011,14 @@ app.post('/gotham/audit/:projectId', upload.single('codeArchive'), async (req, r
             projectId,
             consensusReached,
             passCount,
-            auditResults: auditResults.map((result, idx) => ({
-                auditIndex: idx,
+            consensusTransaction: hash,
+            consensusHash,
+            auditResults: parsedAudits.map((audit, idx) => ({
+                auditIndex: idx + 1,
                 hash: auditHashes[idx],
-                passed: result.toLowerCase().includes('pass') && !result.toLowerCase().includes('fail'),
-                summary: result.substring(0, 200) + '...'
+                decision: audit.decision,
+                passed: audit.passed,
+                reason: audit.reason
             }))
         });
 
@@ -977,44 +1053,67 @@ app.get('/gotham/project/:projectId/audit-history', async (req, res) => {
         });
         console.log('   Escrow address:', escrowAddress);
 
-        // Read audit results from blockchain
-        console.log('📖 Reading audit results from blockchain...');
-        const auditResults = await publicClient.readContract({
+        // Read consensus result from blockchain (NEW: single transaction instead of 3)
+        console.log('📖 Reading consensus result from blockchain...');
+        const consensusResult = await publicClient.readContract({
             address: escrowAddress,
             abi: PROJECT_ESCROW_ABI,
-            functionName: 'getAuditResults'
+            functionName: 'getConsensusResult'
         });
 
-        // Parse the results
-        const parsedResults = auditResults.map((audit, index) => ({
-            auditIndex: index + 1,
-            auditHash: audit.auditHash,
-            timestamp: audit.timestamp ? new Date(Number(audit.timestamp) * 1000).toISOString() : null,
-            passed: audit.passed,
-            submitted: audit.timestamp > 0 // If timestamp is 0, audit wasn't submitted yet
-        }));
+        const [consensusHash, timestamp, passed, submitted] = consensusResult;
 
-        // Calculate consensus
-        const submittedAudits = parsedResults.filter(a => a.submitted);
-        const passedAudits = submittedAudits.filter(a => a.passed);
-        const consensusReached = submittedAudits.length === 3 && passedAudits.length === 3;
+        // Load local negotiation data to get individual audit details
+        console.log('📖 Loading local audit details...');
+        const negotiation = await loadNegotiation(parseInt(projectId));
 
-        console.log('✅ Audit history retrieved');
-        console.log('   Submitted audits:', submittedAudits.length);
-        console.log('   Passed audits:', passedAudits.length);
-        console.log('   Consensus:', consensusReached ? 'REACHED ✅' : 'NOT REACHED ❌');
+        // Find the audit action in blockchain actions
+        const auditAction = negotiation.blockchainActions?.find(
+            action => action.action === 'ai_audit_complete'
+        );
+
+        // Prepare individual audit results (stored locally, not on-chain)
+        let individualAudits = [];
+        if (auditAction && auditAction.auditResults) {
+            individualAudits = auditAction.auditResults.map(audit => ({
+                auditIndex: audit.auditIndex,
+                auditHash: audit.hash,
+                passed: audit.passed,
+                submitted: true,
+                timestamp: timestamp ? new Date(Number(timestamp) * 1000).toISOString() : null
+            }));
+        }
+
+        // Calculate summary
+        const totalAudits = submitted ? 3 : 0; // Always 3 if submitted
+        const passedAudits = submitted ? (passed ? 3 : individualAudits.filter(a => a.passed).length) : 0;
+        const failedAudits = submitted ? (totalAudits - passedAudits) : 0;
+
+        console.log('✅ Consensus history retrieved');
+        console.log('   Blockchain Consensus:', submitted ? (passed ? 'APPROVED ✅' : 'REJECTED ❌') : 'PENDING ⏳');
+        console.log('   Individual Audits (local):', individualAudits.length);
+        console.log('   Passed:', passedAudits, '/ Failed:', failedAudits);
         console.log('=========================================\n');
 
         res.status(200).json({
             projectId,
             escrowAddress,
-            audits: parsedResults,
+            // On-chain consensus data
+            consensus: {
+                hash: consensusHash,
+                timestamp: timestamp ? new Date(Number(timestamp) * 1000).toISOString() : null,
+                passed,
+                submitted
+            },
+            // Individual audits (from local storage)
+            audits: individualAudits,
             summary: {
-                totalAudits: submittedAudits.length,
-                passedAudits: passedAudits.length,
-                failedAudits: submittedAudits.length - passedAudits.length,
-                consensusReached,
-                decision: consensusReached ? 'APPROVED' : (submittedAudits.length === 3 ? 'REJECTED' : 'PENDING')
+                totalAudits,
+                passedAudits,
+                failedAudits,
+                consensusReached: passed && submitted,
+                decision: submitted ? (passed ? 'APPROVED' : 'REJECTED') : 'PENDING',
+                blockchainTransactions: submitted ? 1 : 0 // NEW: Show we only used 1 tx
             }
         });
 
@@ -1066,6 +1165,59 @@ app.get('/gotham/check-transaction/:txHash', async (req, res) => {
 
     } catch (error) {
         console.error('\n❌ CHECK TRANSACTION ERROR:');
+        console.error('   Message:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// List all available projects
+app.get('/gotham/projects', async (req, res) => {
+    try {
+        console.log('\n=== LIST ALL PROJECTS ===');
+
+        const negotiationsDir = path.join(process.cwd(), 'data', 'negotiations');
+
+        // Check if directory exists
+        if (!fs.existsSync(negotiationsDir)) {
+            console.log('No negotiations directory found');
+            return res.status(200).json({ projects: [] });
+        }
+
+        // Read all files in the negotiations directory
+        const files = fs.readdirSync(negotiationsDir);
+        const projectFiles = files.filter(f => f.startsWith('project-') && f.endsWith('.json'));
+
+        const projects = [];
+        for (const file of projectFiles) {
+            try {
+                const filePath = path.join(negotiationsDir, file);
+                const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+
+                // Extract project summary
+                projects.push({
+                    projectId: data.projectId,
+                    clientAddress: data.clientAddress,
+                    developerAddress: data.developerAddress,
+                    status: data.status,
+                    messageCount: data.messages?.length || 0,
+                    hasTerms: !!data.terms && Object.keys(data.terms).length > 0,
+                    lastUpdated: fs.statSync(filePath).mtime
+                });
+            } catch (err) {
+                console.error(`Error reading project file ${file}:`, err);
+            }
+        }
+
+        // Sort by project ID descending (newest first)
+        projects.sort((a, b) => b.projectId - a.projectId);
+
+        console.log(`✅ Found ${projects.length} projects`);
+        console.log('========================\n');
+
+        res.status(200).json({ projects });
+
+    } catch (error) {
+        console.error('\n❌ LIST PROJECTS ERROR:');
         console.error('   Message:', error.message);
         res.status(500).json({ error: error.message });
     }
