@@ -1,0 +1,72 @@
+{
+  "projectId": 7,
+  "lastUpdated": "2026-02-14T05:38:16.035Z",
+  "blockchainActions": [
+    {
+      "action": "create_project",
+      "transactionHash": "0xebb583777410dbf871253dc4981847680d6ecf52b0df733f1c581a6f62af47d3",
+      "blockNumber": "2714974",
+      "from": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
+      "to": "0xd7313e23b7dc19f12ebbfaebff0240dc50fb4d1b",
+      "status": "success",
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0xebb583777410dbf871253dc4981847680d6ecf52b0df733f1c581a6f62af47d3",
+      "timestamp": "2026-02-14T05:38:16.035Z"
+    },
+    {
+      "action": "sign_contract",
+      "transactionHash": "0x27ddcbfa29f699e189ebc4ad2c9e0274d51d1e225bf54b85e16c91bbb461bfcb",
+      "blockNumber": "2715076",
+      "from": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
+      "to": "0x1Fa230027432436558fCF58025cE77f8fcA7E8D1",
+      "negotiationTermsHash": "0xf050159a6d3aa5bc864add6f8be84001ef59dd352ad1369542be318558e011f0",
+      "aiPromptHash": "0xeb4d0d0439f05b3320b98a4c26a36fb7b0b37b8ac73b0facfac5688f1efaffd6",
+      "status": "success",
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x27ddcbfa29f699e189ebc4ad2c9e0274d51d1e225bf54b85e16c91bbb461bfcb",
+      "timestamp": "2026-02-14T05:46:31.061Z"
+    },
+    {
+      "action": "fund_escrow",
+      "transactionHash": "0x525ea5a5b305fbfabc3ed95d3cca2fd3df5d36acd59a1f83f5aa9c500ede8307",
+      "blockNumber": "2715082",
+      "from": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
+      "to": "0x1Fa230027432436558fCF58025cE77f8fcA7E8D1",
+      "value": "250000000000000000",
+      "status": "success",
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x525ea5a5b305fbfabc3ed95d3cca2fd3df5d36acd59a1f83f5aa9c500ede8307",
+      "timestamp": "2026-02-14T05:46:52.742Z"
+    }
+  ],
+  "messages": [
+    {
+      "sender": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
+      "content": "i want a python script that prinst hello world and only this nothign else outptu shioudl only be ba .py scritp exepeyced\n",
+      "senderRole": "client",
+      "timestamp": "2026-02-14T05:38:20.890Z"
+    },
+    {
+      "sender": "0x20e493b5DF87CE996172326B72AaF3Af9c5eeb59",
+      "content": "ok i can do this\n\n",
+      "senderRole": "developer",
+      "timestamp": "2026-02-14T05:38:32.928Z"
+    }
+  ],
+  "terms": {
+    "projectDescription": "Development of a Python script.",
+    "deliverables": [
+      "A Python script that prints 'hello world'.",
+      "The script's execution should only output 'hello world'.",
+      "The deliverable must be a .py script file."
+    ],
+    "additionalTerms": [
+      "The script should contain no other functionality or output beyond what is specified."
+    ],
+    "paymentAmount": "0.25 XTZ",
+    "deadline": "1772044200",
+    "escrowAmount": "250000000000000000",
+    "aiEvaluationPrompt": "You are an AI auditor evaluating code submission for a development project.\n\nPROJECT REQUIREMENTS:\n{\n  \"projectDescription\": \"Development of a Python script.\",\n  \"deliverables\": [\n    \"A Python script that prints 'hello world'.\",\n    \"The script's execution should only output 'hello world'.\",\n    \"The deliverable must be a .py script file.\"\n  ],\n  \"additionalTerms\": [\n    \"The script should contain no other functionality or output beyond what is specified.\"\n  ],\n  \"paymentAmount\": \"0.25 XTZ\",\n  \"deadline\": \"26/02/2026\"\n}\n\nEVALUATION CRITERIA:\n- Does the code repository contain all required features?\n- Are all deliverables implemented according to specifications?\n- Is the code quality acceptable (no major bugs, follows best practices)?\n- Does the submission meet the deadline requirements?\n\nAnalyze the submitted code repository and respond with:\n1. PASS or FAIL\n2. Detailed reasoning for your decision\n3. List of completed requirements\n4. List of missing or incomplete requirements (if any)\n\nBe strict but fair in your evaluation.",
+    "aiPromptHash": "0xeb4d0d0439f05b3320b98a4c26a36fb7b0b37b8ac73b0facfac5688f1efaffd6",
+    "negotiationTermsHash": "0xf050159a6d3aa5bc864add6f8be84001ef59dd352ad1369542be318558e011f0"
+  },
+  "status": "finalized",
+  "finalizedAt": "2026-02-14T05:46:31.056Z"
+}

@@ -28,11 +28,43 @@ export async function saveNegotiation(projectId, negotiationData) {
     const data = {
         projectId,
         lastUpdated: new Date().toISOString(),
+        blockchainActions: negotiationData.blockchainActions || [],
         ...negotiationData
     };
 
     await fs.writeFile(filePath, JSON.stringify(data, null, 2));
     return data;
+}
+
+/**
+ * Add blockchain action to project history
+ * @param {number} projectId - Project ID
+ * @param {object} action - Blockchain action details
+ */
+export async function addBlockchainAction(projectId, action) {
+    let negotiation = await loadNegotiation(projectId);
+
+    if (!negotiation) {
+        negotiation = {
+            projectId,
+            messages: [],
+            terms: {},
+            status: 'ongoing',
+            blockchainActions: []
+        };
+    }
+
+    if (!negotiation.blockchainActions) {
+        negotiation.blockchainActions = [];
+    }
+
+    negotiation.blockchainActions.push({
+        ...action,
+        timestamp: new Date().toISOString()
+    });
+
+    await saveNegotiation(projectId, negotiation);
+    return negotiation;
 }
 
 /**

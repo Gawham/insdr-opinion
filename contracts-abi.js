@@ -16,17 +16,6 @@ export const GOTHAM_FACTORY_ABI = [
     },
     {
         "inputs": [
-            { "internalType": "uint256", "name": "_projectId", "type": "uint256" },
-            { "internalType": "bytes32", "name": "_auditHash", "type": "bytes32" },
-            { "internalType": "bool", "name": "_passed", "type": "bool" }
-        ],
-        "name": "submitAuditResult",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
             { "internalType": "uint256", "name": "_projectId", "type": "uint256" }
         ],
         "name": "getProjectContract",
@@ -82,9 +71,38 @@ export const GOTHAM_FACTORY_ABI = [
 export const PROJECT_ESCROW_ABI = [
     {
         "inputs": [
+            { "internalType": "bytes32", "name": "_negotiationTermsHash", "type": "bytes32" },
+            { "internalType": "bytes32", "name": "_aiPromptHash", "type": "bytes32" },
+            { "internalType": "uint256", "name": "_escrowAmount", "type": "uint256" },
+            { "internalType": "uint256", "name": "_deadline", "type": "uint256" }
+        ],
+        "name": "signContract",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "fundEscrow",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
             { "internalType": "bytes32", "name": "_codeHash", "type": "bytes32" }
         ],
         "name": "submitCode",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            { "internalType": "bytes32", "name": "_auditHash", "type": "bytes32" },
+            { "internalType": "bool", "name": "_passed", "type": "bool" }
+        ],
+        "name": "submitAuditResult",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
