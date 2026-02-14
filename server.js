@@ -38,9 +38,17 @@ const etherlinkShadownet = {
 };
 
 // 2. Client Initialization
-const account = privateKeyToAccount(process.env.PRIVATE_KEY);
+const clientAccount = privateKeyToAccount(process.env.PRIVATE_KEY);
+const developerAccount = privateKeyToAccount(process.env.DEVELOPER_PRIVATE_KEY);
 const publicClient = createPublicClient({ chain: etherlinkShadownet, transport: http() });
-const walletClient = createWalletClient({ account, chain: etherlinkShadownet, transport: http() });
+const clientWalletClient = createWalletClient({ account: clientAccount, chain: etherlinkShadownet, transport: http() });
+const developerWalletClient = createWalletClient({ account: developerAccount, chain: etherlinkShadownet, transport: http() });
+
+console.log('\n=== WALLET INITIALIZATION ===');
+console.log('Client Wallet Address:', clientAccount.address);
+console.log('Developer Wallet Address:', developerAccount.address);
+console.log('Factory Contract:', process.env.GOTHAM_FACTORY_ADDRESS);
+console.log('============================\n');
 
 // 3. GCP Storage Setup
 // const storage = new Storage({ keyFilename: process.env.GCP_KEYFILE_PATH });
@@ -175,7 +183,7 @@ app.post('/audit-request', upload.single('contextFile'), async (req, res) => {
 
         // C. Interact with Etherlink Smart Contract
         // Calling the 'submitRequest' function on your deployed contract
-        const hash = await walletClient.writeContract({
+        const hash = await clientWalletClient.writeContract({
             address: process.env.CONTRACT_ADDRESS,
             abi: YOUR_CONTRACT_ABI,
             functionName: 'submitRequest',
@@ -360,23 +368,32 @@ app.post('/analyze-url', async (req, res) => {
 // Create new project
 app.post('/gotham/create-project', async (req, res) => {
     try {
+        console.log('\n=== CREATE PROJECT ===');
         const { clientAddress, developerAddress } = req.body;
+        console.log('Request:', { clientAddress, developerAddress });
 
         if (!clientAddress || !developerAddress) {
+            console.log('❌ Missing addresses');
             return res.status(400).json({ error: "Client and developer addresses required" });
         }
 
         if (!process.env.GOTHAM_FACTORY_ADDRESS) {
+            console.log('❌ Factory address not configured');
             return res.status(500).json({ error: "GOTHAM_FACTORY_ADDRESS not configured" });
         }
 
-        // Call factory contract to create new project
-        const hash = await walletClient.writeContract({
+        // Call factory contract to create new project (use client wallet)
+        console.log('📝 Calling createProject on factory...');
+        console.log('   Using wallet:', clientAccount.address);
+        console.log('   Factory address:', process.env.GOTHAM_FACTORY_ADDRESS);
+        const hash = await clientWalletClient.writeContract({
             address: process.env.GOTHAM_FACTORY_ADDRESS,
             abi: GOTHAM_FACTORY_ABI,
             functionName: 'createProject',
             args: [clientAddress, developerAddress],
         });
+        console.log('✅ Transaction sent:', hash);
+        console.log('⏳ Waiting for receipt to get project ID...');
 
         // Wait for transaction receipt to get project ID and escrow address
         const receipt = await publicClient.waitForTransactionReceipt({ hash });
@@ -406,13 +423,19 @@ app.post('/gotham/create-project', async (req, res) => {
                 action: 'create_project',
                 transactionHash: hash,
                 blockNumber: receipt.blockNumber.toString(),
-                from: account.address,
+                from: clientAccount.address,
                 to: process.env.GOTHAM_FACTORY_ADDRESS,
                 escrowContract,
                 status: 'success',
                 explorerUrl: `https://shadownet.explorer.etherlink.com/tx/${hash}`
             });
         }
+
+        console.log('✅ Project created successfully');
+        console.log('   Transaction:', hash);
+        console.log('   Project ID:', parsedProjectId);
+        console.log('   Escrow Contract:', escrowContract);
+        console.log('======================\n');
 
         res.status(200).json({
             message: "Project created successfully",
@@ -423,7 +446,9 @@ app.post('/gotham/create-project', async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Create project error:", error);
+        console.error('\n❌ CREATE PROJECT ERROR:');
+        console.error('   Message:', error.message);
+        console.error('   Stack:', error.stack);
         res.status(500).json({ error: error.message });
     }
 });
@@ -470,13 +495,19 @@ app.get('/gotham/negotiation/:projectId', async (req, res) => {
     }
 });
 
-// Finalize negotiation and generate AI prompt
+// Finalize negotiation - HYBRID: supports both wallet and backend signing
 app.post('/gotham/negotiation/:projectId/finalize', async (req, res) => {
     try {
+        console.log('\n=== FINALIZE CONTRACT ===');
         const { projectId } = req.params;
-        const { finalTerms, escrowAmount, deadline } = req.body;
+        const { finalTerms, escrowAmount, deadline, transactionHash } = req.body;
+        console.log('Project ID:', projectId);
+        console.log('Escrow Amount:', escrowAmount, 'wei');
+        console.log('Deadline:', deadline);
+        console.log('Transaction Hash provided:', transactionHash || 'None (POC mode)');
 
         if (!finalTerms || !escrowAmount || !deadline) {
+            console.log('❌ Missing required fields');
             return res.status(400).json({ error: "Missing required fields" });
         }
 
@@ -503,29 +534,44 @@ Be strict but fair in your evaluation.`;
         const aiPromptHash = keccak256(toHex(promptTemplate));
         const negotiationTermsHash = keccak256(toHex(JSON.stringify(finalTerms)));
 
-        // Get project escrow contract address
-        const escrowAddress = await publicClient.readContract({
-            address: process.env.GOTHAM_FACTORY_ADDRESS,
-            abi: GOTHAM_FACTORY_ABI,
-            functionName: 'getProjectContract',
-            args: [BigInt(projectId)]
-        });
+        let hash = transactionHash;
+        let receipt;
 
-        // Call signContract on the escrow contract
-        const hash = await walletClient.writeContract({
-            address: escrowAddress,
-            abi: PROJECT_ESCROW_ABI,
-            functionName: 'signContract',
-            args: [
+        // If no transactionHash, backend signs (POC mode)
+        if (!transactionHash) {
+            console.log("🔧 POC Mode: Backend signing transaction");
+
+            console.log('📖 Reading escrow contract address from factory...');
+            const escrowAddress = await publicClient.readContract({
+                address: process.env.GOTHAM_FACTORY_ADDRESS,
+                abi: GOTHAM_FACTORY_ABI,
+                functionName: 'getProjectContract',
+                args: [BigInt(projectId)]
+            });
+            console.log('   Escrow address:', escrowAddress);
+
+            console.log('📝 Signing contract...');
+            console.log('   Using wallet:', clientAccount.address, '(CLIENT)');
+            console.log('   Function: signContract');
+            console.log('   Args:', {
                 negotiationTermsHash,
                 aiPromptHash,
-                BigInt(escrowAmount),
-                BigInt(deadline)
-            ],
-        });
+                escrowAmount: escrowAmount.toString(),
+                deadline: deadline.toString()
+            });
 
-        // Wait for transaction receipt
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+            hash = await clientWalletClient.writeContract({
+                address: escrowAddress,
+                abi: PROJECT_ESCROW_ABI,
+                functionName: 'signContract',
+                args: [negotiationTermsHash, aiPromptHash, BigInt(escrowAmount), BigInt(deadline)],
+            });
+            console.log('✅ Transaction sent:', hash);
+            console.log('💾 Saving transaction hash (not waiting for confirmation)');
+        } else {
+            console.log("🌐 Wallet Mode: Using frontend transaction");
+            hash = transactionHash;
+        }
 
         // Save finalized negotiation with AI prompt
         const negotiation = await finalizeNegotiation(parseInt(projectId), {
@@ -537,178 +583,156 @@ Be strict but fair in your evaluation.`;
             negotiationTermsHash
         });
 
-        // Save blockchain action
+        // Save blockchain action immediately (status: pending)
         await addBlockchainAction(parseInt(projectId), {
             action: 'sign_contract',
             transactionHash: hash,
-            blockNumber: receipt.blockNumber.toString(),
-            from: account.address,
-            to: escrowAddress,
             negotiationTermsHash,
             aiPromptHash,
-            status: 'success',
+            status: 'pending',
             explorerUrl: `https://shadownet.explorer.etherlink.com/tx/${hash}`
         });
 
+        console.log('✅ Contract signing transaction broadcasted');
+        console.log('   Transaction:', hash);
+        console.log('   Mode:', transactionHash ? 'Wallet' : 'POC');
+        console.log('   Status: PENDING (check status separately)');
+        console.log('========================\n');
+
         res.status(200).json({
-            message: "Contract signed on blockchain",
+            message: "Transaction submitted - check status to confirm",
             negotiation,
             transactionHash: hash,
             aiPromptHash,
             negotiationTermsHash,
+            status: 'pending',
             explorerUrl: `https://shadownet.explorer.etherlink.com/tx/${hash}`
         });
 
     } catch (error) {
-        console.error("Finalize negotiation error:", error);
+        console.error('\n❌ FINALIZE NEGOTIATION ERROR:');
+        console.error('   Message:', error.message);
+        console.error('   Stack:', error.stack);
+        if (error.cause) console.error('   Cause:', error.cause);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Fund escrow (client deposits payment)
+// Fund escrow - HYBRID: supports both wallet and backend signing
 app.post('/gotham/fund-escrow/:projectId', async (req, res) => {
     try {
+        console.log('\n=== FUND ESCROW ===');
         const { projectId } = req.params;
-        const { escrowAmount } = req.body;
+        const { escrowAmount, transactionHash } = req.body;
+        console.log('Project ID:', projectId);
+        console.log('Escrow Amount:', escrowAmount, 'wei');
+        console.log('Transaction Hash provided:', transactionHash || 'None (POC mode)');
 
         if (!escrowAmount) {
-            return res.status(400).json({ error: "Escrow amount not provided" });
+            console.log('❌ Missing escrow amount');
+            return res.status(400).json({ error: "Missing escrow amount" });
         }
 
-        if (!process.env.GOTHAM_FACTORY_ADDRESS) {
-            return res.status(500).json({ error: "GOTHAM_FACTORY_ADDRESS not configured" });
+        let hash = transactionHash;
+        let receipt;
+
+        // If no transactionHash, backend signs (POC mode)
+        if (!transactionHash) {
+            console.log('🔧 POC Mode: Backend funding escrow');
+
+            console.log('📖 Reading escrow contract address from factory...');
+            const escrowAddress = await publicClient.readContract({
+                address: process.env.GOTHAM_FACTORY_ADDRESS,
+                abi: GOTHAM_FACTORY_ABI,
+                functionName: 'getProjectContract',
+                args: [BigInt(projectId)]
+            });
+            console.log('   Escrow address:', escrowAddress);
+
+            console.log('💰 Funding escrow...');
+            console.log('   Using wallet:', clientAccount.address, '(CLIENT)');
+            console.log('   Function: fundEscrow');
+            console.log('   Value:', escrowAmount, 'wei');
+
+            hash = await clientWalletClient.writeContract({
+                address: escrowAddress,
+                abi: PROJECT_ESCROW_ABI,
+                functionName: 'fundEscrow',
+                value: BigInt(escrowAmount),
+            });
+            console.log('✅ Transaction sent:', hash);
+            console.log('💾 Saving transaction hash (not waiting for confirmation)');
+        } else {
+            console.log('🌐 Wallet Mode: Using frontend transaction');
+            hash = transactionHash;
         }
 
-        // Get project escrow contract address
-        const escrowAddress = await publicClient.readContract({
-            address: process.env.GOTHAM_FACTORY_ADDRESS,
-            abi: GOTHAM_FACTORY_ABI,
-            functionName: 'getProjectContract',
-            args: [BigInt(projectId)]
-        });
-
-        // Call escrow contract to fund (payable function)
-        const hash = await walletClient.writeContract({
-            address: escrowAddress,
-            abi: PROJECT_ESCROW_ABI,
-            functionName: 'fundEscrow',
-            value: BigInt(escrowAmount),
-        });
-
-        // Wait for transaction receipt
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
-
-        // Save blockchain action
+        // Save blockchain action immediately (status: pending)
         await addBlockchainAction(parseInt(projectId), {
             action: 'fund_escrow',
             transactionHash: hash,
-            blockNumber: receipt.blockNumber.toString(),
-            from: account.address,
-            to: escrowAddress,
             value: escrowAmount,
-            status: 'success',
+            status: 'pending',
             explorerUrl: `https://shadownet.explorer.etherlink.com/tx/${hash}`
         });
 
+        console.log('✅ Escrow funding transaction broadcasted');
+        console.log('   Transaction:', hash);
+        console.log('   Amount:', escrowAmount, 'wei');
+        console.log('   Mode:', transactionHash ? 'Wallet' : 'POC');
+        console.log('   Status: PENDING (check status separately)');
+        console.log('===================\n');
+
         res.status(200).json({
-            message: "Escrow funded successfully",
+            message: "Transaction submitted - check status to confirm",
             transactionHash: hash,
             projectId,
             escrowAmount,
+            status: 'pending',
             explorerUrl: `https://shadownet.explorer.etherlink.com/tx/${hash}`
         });
 
     } catch (error) {
-        console.error("Fund escrow error:", error);
+        console.error('\n❌ FUND ESCROW ERROR:');
+        console.error('   Message:', error.message);
+        console.error('   Stack:', error.stack);
+        if (error.cause) console.error('   Cause:', error.cause);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Submit code for audit (developer uploads code)
+// Submit code and run AI audit immediately (POC simplified flow)
 app.post('/gotham/submit-code/:projectId', upload.single('codeArchive'), async (req, res) => {
     try {
+        console.log('\n=== SUBMIT CODE & AUTO-AUDIT (POC MODE) ===');
         const { projectId } = req.params;
         const file = req.file;
+        console.log('Project ID:', projectId);
+        console.log('File:', file ? `${file.originalname} (${file.size} bytes)` : 'None');
 
         if (!file) {
-            return res.status(400).json({ error: "No code archive provided" });
-        }
-
-        if (!process.env.GOTHAM_FACTORY_ADDRESS) {
-            return res.status(500).json({ error: "GOTHAM_FACTORY_ADDRESS not configured" });
-        }
-
-        // Generate hash of submitted code
-        const codeHash = keccak256(file.buffer);
-
-        // Get project escrow contract address
-        const escrowAddress = await publicClient.readContract({
-            address: process.env.GOTHAM_FACTORY_ADDRESS,
-            abi: GOTHAM_FACTORY_ABI,
-            functionName: 'getProjectContract',
-            args: [BigInt(projectId)]
-        });
-
-        // Call escrow contract to submit code
-        const hash = await walletClient.writeContract({
-            address: escrowAddress,
-            abi: PROJECT_ESCROW_ABI,
-            functionName: 'submitCode',
-            args: [codeHash],
-        });
-
-        // Wait for transaction receipt
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
-
-        // Save blockchain action
-        await addBlockchainAction(parseInt(projectId), {
-            action: 'submit_code',
-            transactionHash: hash,
-            blockNumber: receipt.blockNumber.toString(),
-            from: account.address,
-            to: escrowAddress,
-            codeHash,
-            status: 'success',
-            explorerUrl: `https://shadownet.explorer.etherlink.com/tx/${hash}`
-        });
-
-        res.status(200).json({
-            message: "Code submitted for audit",
-            transactionHash: hash,
-            codeHash,
-            projectId,
-            explorerUrl: `https://shadownet.explorer.etherlink.com/tx/${hash}`
-        });
-
-    } catch (error) {
-        console.error("Submit code error:", error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Run AI audit (3 Gemini calls for consensus)
-app.post('/gotham/audit/:projectId', upload.single('codeArchive'), async (req, res) => {
-    try {
-        const { projectId } = req.params;
-        const file = req.file;
-
-        if (!file) {
+            console.log('❌ No code archive provided');
             return res.status(400).json({ error: "No code archive provided" });
         }
 
         if (!process.env.GEMINI_API_KEY) {
+            console.log('❌ GEMINI_API_KEY not configured');
             return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
         }
 
         // Load negotiation to get AI evaluation prompt
+        console.log('📖 Loading project negotiation...');
         const negotiation = await loadNegotiation(parseInt(projectId));
         if (!negotiation || !negotiation.terms.aiEvaluationPrompt) {
+            console.log('❌ No AI evaluation prompt found');
             return res.status(400).json({ error: "No AI evaluation prompt found for this project" });
         }
 
         const aiPrompt = negotiation.terms.aiEvaluationPrompt;
+        console.log('✅ AI prompt loaded');
 
-        // Run 3 independent AI audits
+        // Run 3 independent AI audits immediately
+        console.log('🤖 Running 3 independent AI audits...');
         const auditPromises = [
             generateContentFromFile(file.buffer, file.mimetype, aiPrompt),
             generateContentFromFile(file.buffer, file.mimetype, aiPrompt),
@@ -716,41 +740,192 @@ app.post('/gotham/audit/:projectId', upload.single('codeArchive'), async (req, r
         ];
 
         const auditResults = await Promise.all(auditPromises);
+        console.log('✅ All audits completed');
 
         // Analyze results for consensus
+        console.log('📊 Analyzing audit results...');
         const passCount = auditResults.filter(result =>
             result.toLowerCase().includes('pass') && !result.toLowerCase().includes('fail')
         ).length;
 
         const consensusReached = passCount === 3; // All 3 must pass
+        console.log(`   Pass count: ${passCount}/3`);
+        console.log(`   Consensus: ${consensusReached ? '✅ REACHED (APPROVED)' : '❌ NOT REACHED (REJECTED)'}`);
 
-        // Submit audit results to blockchain
-        if (!process.env.GOTHAM_FACTORY_ADDRESS) {
-            return res.status(500).json({ error: "GOTHAM_FACTORY_ADDRESS not configured" });
-        }
-
-        // Get project escrow contract address
+        // Get escrow contract address
+        console.log('📖 Reading escrow contract address...');
         const escrowAddress = await publicClient.readContract({
             address: process.env.GOTHAM_FACTORY_ADDRESS,
             abi: GOTHAM_FACTORY_ABI,
             functionName: 'getProjectContract',
             args: [BigInt(projectId)]
         });
+        console.log('   Escrow address:', escrowAddress);
 
         const auditHashes = auditResults.map(result => keccak256(toHex(result)));
 
-        // Submit each audit result to the escrow contract
+        // Submit audit results to blockchain via factory (code hash not stored on-chain for speed)
+        console.log('📝 Submitting audit results to blockchain via factory...');
+        const txHashes = [];
         for (let i = 0; i < 3; i++) {
             const passed = auditResults[i].toLowerCase().includes('pass') &&
                          !auditResults[i].toLowerCase().includes('fail');
 
-            await walletClient.writeContract({
+            console.log(`   Audit ${i + 1}: ${passed ? 'PASS ✅' : 'FAIL ❌'}`);
+            console.log('   Using wallet:', clientAccount.address, '(CLIENT)');
+
+            const hash = await clientWalletClient.writeContract({
+                address: process.env.GOTHAM_FACTORY_ADDRESS,
+                abi: GOTHAM_FACTORY_ABI,
+                functionName: 'submitAuditResult',
+                args: [BigInt(projectId), auditHashes[i], passed],
+            });
+            console.log('   Transaction:', hash);
+            txHashes.push(hash);
+        }
+        console.log('✅ All audit results submitted to blockchain');
+
+        // Prepare individual audit results
+        const auditResultDetails = auditResults.map((result, i) => ({
+            auditIndex: i + 1,
+            passed: result.toLowerCase().includes('pass') && !result.toLowerCase().includes('fail'),
+            transactionHash: txHashes[i]
+        }));
+
+        // Save blockchain actions
+        await addBlockchainAction(parseInt(projectId), {
+            action: 'ai_audit_complete',
+            filename: file.originalname,
+            fileSize: file.size,
+            auditResults: auditResultDetails,
+            auditTransactions: txHashes,
+            consensusReached,
+            passCount,
+            decision: consensusReached ? 'APPROVED' : 'REJECTED',
+            status: 'pending',
+        });
+
+        console.log('✅ Code audited and results saved to blockchain');
+        console.log('   Consensus:', consensusReached ? 'APPROVED ✅' : 'REJECTED ❌');
+        console.log('   Audit TXs:', txHashes.length);
+        console.log('========================================\n');
+
+        res.status(200).json({
+            message: "Code audited successfully",
+            projectId,
+            consensusReached,
+            passCount,
+            decision: consensusReached ? 'APPROVED' : 'REJECTED',
+            auditTransactions: txHashes,
+            auditResults: auditResults.map((result, idx) => ({
+                auditIndex: idx,
+                hash: auditHashes[idx],
+                passed: result.toLowerCase().includes('pass') && !result.toLowerCase().includes('fail'),
+                summary: result.substring(0, 200) + '...'
+            }))
+        });
+
+    } catch (error) {
+        console.error('\n❌ SUBMIT CODE & AUDIT ERROR:');
+        console.error('   Message:', error.message);
+        console.error('   Stack:', error.stack);
+        if (error.cause) console.error('   Cause:', error.cause);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Run AI audit (3 Gemini calls for consensus)
+app.post('/gotham/audit/:projectId', upload.single('codeArchive'), async (req, res) => {
+    try {
+        console.log('\n=== AI AUDIT ===');
+        const { projectId } = req.params;
+        const file = req.file;
+        console.log('Project ID:', projectId);
+        console.log('File:', file ? `${file.originalname} (${file.size} bytes)` : 'None');
+
+        if (!file) {
+            console.log('❌ No code archive provided');
+            return res.status(400).json({ error: "No code archive provided" });
+        }
+
+        if (!process.env.GEMINI_API_KEY) {
+            console.log('❌ GEMINI_API_KEY not configured');
+            return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
+        }
+
+        // Load negotiation to get AI evaluation prompt
+        console.log('📖 Loading project negotiation...');
+        const negotiation = await loadNegotiation(parseInt(projectId));
+        if (!negotiation || !negotiation.terms.aiEvaluationPrompt) {
+            console.log('❌ No AI evaluation prompt found');
+            return res.status(400).json({ error: "No AI evaluation prompt found for this project" });
+        }
+
+        const aiPrompt = negotiation.terms.aiEvaluationPrompt;
+        console.log('✅ AI prompt loaded');
+
+        // Run 3 independent AI audits
+        console.log('🤖 Running 3 independent AI audits...');
+        const auditPromises = [
+            generateContentFromFile(file.buffer, file.mimetype, aiPrompt),
+            generateContentFromFile(file.buffer, file.mimetype, aiPrompt),
+            generateContentFromFile(file.buffer, file.mimetype, aiPrompt)
+        ];
+
+        const auditResults = await Promise.all(auditPromises);
+        console.log('✅ All audits completed');
+
+        // Analyze results for consensus
+        console.log('📊 Analyzing audit results...');
+        const passCount = auditResults.filter(result =>
+            result.toLowerCase().includes('pass') && !result.toLowerCase().includes('fail')
+        ).length;
+
+        const consensusReached = passCount === 3; // All 3 must pass
+        console.log(`   Pass count: ${passCount}/3`);
+        console.log(`   Consensus: ${consensusReached ? '✅ REACHED' : '❌ NOT REACHED'}`);
+
+        // Submit audit results to blockchain
+        if (!process.env.GOTHAM_FACTORY_ADDRESS) {
+            console.log('❌ Factory address not configured');
+            return res.status(500).json({ error: "GOTHAM_FACTORY_ADDRESS not configured" });
+        }
+
+        // Get project escrow contract address
+        console.log('📖 Reading escrow contract address...');
+        const escrowAddress = await publicClient.readContract({
+            address: process.env.GOTHAM_FACTORY_ADDRESS,
+            abi: GOTHAM_FACTORY_ABI,
+            functionName: 'getProjectContract',
+            args: [BigInt(projectId)]
+        });
+        console.log('   Escrow address:', escrowAddress);
+
+        const auditHashes = auditResults.map(result => keccak256(toHex(result)));
+
+        // Submit each audit result to the escrow contract
+        console.log('📝 Submitting audit results to blockchain...');
+        for (let i = 0; i < 3; i++) {
+            const passed = auditResults[i].toLowerCase().includes('pass') &&
+                         !auditResults[i].toLowerCase().includes('fail');
+
+            console.log(`   Audit ${i + 1}: ${passed ? 'PASS ✅' : 'FAIL ❌'}`);
+            console.log('   Using wallet:', clientAccount.address, '(CLIENT)');
+
+            const hash = await clientWalletClient.writeContract({
                 address: escrowAddress,
                 abi: PROJECT_ESCROW_ABI,
                 functionName: 'submitAuditResult',
                 args: [auditHashes[i], passed],
             });
+            console.log('   Transaction:', hash);
         }
+        console.log('✅ All audit results submitted to blockchain');
+
+        console.log('✅ AI audit completed');
+        console.log('   Consensus:', consensusReached ? 'REACHED ✅' : 'NOT REACHED ❌');
+        console.log('   Pass count:', passCount, '/ 3');
+        console.log('==============\n');
 
         res.status(200).json({
             message: "AI audit completed",
@@ -766,7 +941,126 @@ app.post('/gotham/audit/:projectId', upload.single('codeArchive'), async (req, r
         });
 
     } catch (error) {
-        console.error("AI audit error:", error);
+        console.error('\n❌ AI AUDIT ERROR:');
+        console.error('   Message:', error.message);
+        console.error('   Stack:', error.stack);
+        if (error.cause) console.error('   Cause:', error.cause);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get audit history from blockchain
+app.get('/gotham/project/:projectId/audit-history', async (req, res) => {
+    try {
+        console.log('\n=== GET AUDIT HISTORY FROM BLOCKCHAIN ===');
+        const { projectId } = req.params;
+        console.log('Project ID:', projectId);
+
+        if (!process.env.GOTHAM_FACTORY_ADDRESS) {
+            console.log('❌ Factory address not configured');
+            return res.status(500).json({ error: "GOTHAM_FACTORY_ADDRESS not configured" });
+        }
+
+        // Get escrow contract address
+        console.log('📖 Reading escrow contract address...');
+        const escrowAddress = await publicClient.readContract({
+            address: process.env.GOTHAM_FACTORY_ADDRESS,
+            abi: GOTHAM_FACTORY_ABI,
+            functionName: 'getProjectContract',
+            args: [BigInt(projectId)]
+        });
+        console.log('   Escrow address:', escrowAddress);
+
+        // Read audit results from blockchain
+        console.log('📖 Reading audit results from blockchain...');
+        const auditResults = await publicClient.readContract({
+            address: escrowAddress,
+            abi: PROJECT_ESCROW_ABI,
+            functionName: 'getAuditResults'
+        });
+
+        // Parse the results
+        const parsedResults = auditResults.map((audit, index) => ({
+            auditIndex: index + 1,
+            auditHash: audit.auditHash,
+            timestamp: audit.timestamp ? new Date(Number(audit.timestamp) * 1000).toISOString() : null,
+            passed: audit.passed,
+            submitted: audit.timestamp > 0 // If timestamp is 0, audit wasn't submitted yet
+        }));
+
+        // Calculate consensus
+        const submittedAudits = parsedResults.filter(a => a.submitted);
+        const passedAudits = submittedAudits.filter(a => a.passed);
+        const consensusReached = submittedAudits.length === 3 && passedAudits.length === 3;
+
+        console.log('✅ Audit history retrieved');
+        console.log('   Submitted audits:', submittedAudits.length);
+        console.log('   Passed audits:', passedAudits.length);
+        console.log('   Consensus:', consensusReached ? 'REACHED ✅' : 'NOT REACHED ❌');
+        console.log('=========================================\n');
+
+        res.status(200).json({
+            projectId,
+            escrowAddress,
+            audits: parsedResults,
+            summary: {
+                totalAudits: submittedAudits.length,
+                passedAudits: passedAudits.length,
+                failedAudits: submittedAudits.length - passedAudits.length,
+                consensusReached,
+                decision: consensusReached ? 'APPROVED' : (submittedAudits.length === 3 ? 'REJECTED' : 'PENDING')
+            }
+        });
+
+    } catch (error) {
+        console.error('\n❌ GET AUDIT HISTORY ERROR:');
+        console.error('   Message:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Check transaction status
+app.get('/gotham/check-transaction/:txHash', async (req, res) => {
+    try {
+        console.log('\n=== CHECK TRANSACTION STATUS ===');
+        const { txHash } = req.params;
+        console.log('Transaction Hash:', txHash);
+
+        try {
+            // Try to get receipt without waiting
+            const receipt = await publicClient.getTransactionReceipt({ hash: txHash });
+
+            if (receipt) {
+                console.log('✅ Transaction confirmed!');
+                console.log('   Block:', receipt.blockNumber.toString());
+                console.log('   Status:', receipt.status === 'success' ? 'SUCCESS' : 'FAILED');
+
+                res.status(200).json({
+                    status: receipt.status === 'success' ? 'confirmed' : 'failed',
+                    receipt: {
+                        blockNumber: receipt.blockNumber.toString(),
+                        gasUsed: receipt.gasUsed.toString(),
+                        from: receipt.from,
+                        to: receipt.to,
+                        status: receipt.status
+                    },
+                    explorerUrl: `https://shadownet.explorer.etherlink.com/tx/${txHash}`
+                });
+            }
+        } catch (error) {
+            // Receipt not found = transaction still pending
+            console.log('⏳ Transaction still pending');
+            res.status(200).json({
+                status: 'pending',
+                transactionHash: txHash,
+                message: 'Transaction is pending confirmation',
+                explorerUrl: `https://shadownet.explorer.etherlink.com/tx/${txHash}`
+            });
+        }
+
+    } catch (error) {
+        console.error('\n❌ CHECK TRANSACTION ERROR:');
+        console.error('   Message:', error.message);
         res.status(500).json({ error: error.message });
     }
 });

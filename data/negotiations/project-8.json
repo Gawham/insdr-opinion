@@ -1,0 +1,85 @@
+{
+  "projectId": 8,
+  "lastUpdated": "2026-02-14T06:36:36.153Z",
+  "blockchainActions": [
+    {
+      "action": "create_project",
+      "transactionHash": "0x5156b5407dc32c75effce42eff6e1156bb8989750a29d3abb3261db7fde5a725",
+      "blockNumber": "2715706",
+      "from": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
+      "to": "0xd7313e23b7dc19f12ebbfaebff0240dc50fb4d1b",
+      "status": "success",
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x5156b5407dc32c75effce42eff6e1156bb8989750a29d3abb3261db7fde5a725",
+      "timestamp": "2026-02-14T06:36:36.155Z"
+    },
+    {
+      "action": "sign_contract",
+      "transactionHash": "0xd25ac37866b331c8de4cd01de3dbce33d814142b9499981090dc53bfa65dd4cd",
+      "blockNumber": "2715769",
+      "from": "0xd8349aff09364f110ba64d05c7b2f3710fe45585",
+      "to": "0x55e57e1eba49dc94cdaabb256d0e9e51f14ffa6a",
+      "negotiationTermsHash": "0x42dd17a2f5c3071dce1d4a871e143153565afe5964ce021a091a5043cae39c6f",
+      "aiPromptHash": "0x207b1ca2f8fa0e1409a460fc083712db45b72e8032de582911872964ed278a12",
+      "status": "success",
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0xd25ac37866b331c8de4cd01de3dbce33d814142b9499981090dc53bfa65dd4cd",
+      "timestamp": "2026-02-14T06:41:49.361Z"
+    },
+    {
+      "action": "fund_escrow",
+      "transactionHash": "0x34afd50312b6592cdf41e83dee2abc79bf5f4e89985724582bdb80d0c573fef2",
+      "blockNumber": "2715771",
+      "from": "0xd8349aff09364f110ba64d05c7b2f3710fe45585",
+      "to": "0x55e57e1eba49dc94cdaabb256d0e9e51f14ffa6a",
+      "value": "250000000000000000",
+      "status": "success",
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x34afd50312b6592cdf41e83dee2abc79bf5f4e89985724582bdb80d0c573fef2",
+      "timestamp": "2026-02-14T06:41:58.606Z"
+    },
+    {
+      "action": "ai_audit_complete",
+      "auditTransactions": [
+        "0x7d68ace6b98482e54b1688aae4a8591873fe2079862e43027a66a009660a8315",
+        "0x449f11fe0346fa1c5ff4e1d96bca76af26f925cf5f7cab66042aea91f448149b",
+        "0x57385fe5811106d771db7fb6ebdcf60706727ffd81c6fd7635cd7e3ce265f7ec"
+      ],
+      "consensusReached": false,
+      "passCount": 0,
+      "status": "pending",
+      "timestamp": "2026-02-14T07:11:11.929Z"
+    }
+  ],
+  "clientAddress": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
+  "developerAddress": "0x4b7236b9c62902935816eD94585516b837fCC611",
+  "messages": [
+    {
+      "sender": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
+      "content": "Id like python code that outptus hellow world. reuiemntis strct on me needing a .py filw only\n",
+      "senderRole": "client",
+      "timestamp": "2026-02-14T06:36:58.308Z"
+    },
+    {
+      "sender": "0x4b7236b9c62902935816eD94585516b837fCC611",
+      "content": "ok",
+      "senderRole": "developer",
+      "timestamp": "2026-02-14T06:37:31.057Z"
+    }
+  ],
+  "terms": {
+    "projectDescription": "Development of Python code to output 'hello world'.",
+    "deliverables": [
+      "A single .py file"
+    ],
+    "additionalTerms": [
+      "The .py file must contain Python code that outputs 'hello world'.",
+      "The deliverable must strictly be a .py file only, without any additional files or formats."
+    ],
+    "paymentAmount": "0.25 XTZ",
+    "deadline": "1771871400",
+    "escrowAmount": "250000000000000000",
+    "aiEvaluationPrompt": "You are an AI auditor evaluating code submission for a development project.\n\nPROJECT REQUIREMENTS:\n{\n  \"projectDescription\": \"Development of Python code to output 'hello world'.\",\n  \"deliverables\": [\n    \"A single .py file\"\n  ],\n  \"additionalTerms\": [\n    \"The .py file must contain Python code that outputs 'hello world'.\",\n    \"The deliverable must strictly be a .py file only, without any additional files or formats.\"\n  ],\n  \"paymentAmount\": \"0.25 XTZ\",\n  \"deadline\": \"24/02/2026\"\n}\n\nEVALUATION CRITERIA:\n- Does the code repository contain all required features?\n- Are all deliverables implemented according to specifications?\n- Is the code quality acceptable (no major bugs, follows best practices)?\n- Does the submission meet the deadline requirements?\n\nAnalyze the submitted code repository and respond with:\n1. PASS or FAIL\n2. Detailed reasoning for your decision\n3. List of completed requirements\n4. List of missing or incomplete requirements (if any)\n\nBe strict but fair in your evaluation.",
+    "aiPromptHash": "0x207b1ca2f8fa0e1409a460fc083712db45b72e8032de582911872964ed278a12",
+    "negotiationTermsHash": "0x42dd17a2f5c3071dce1d4a871e143153565afe5964ce021a091a5043cae39c6f"
+  },
+  "status": "finalized",
+  "finalizedAt": "2026-02-14T06:41:49.358Z"
+}

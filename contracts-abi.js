@@ -56,6 +56,17 @@ export const GOTHAM_FACTORY_ABI = [
         "type": "function"
     },
     {
+        "inputs": [
+            { "internalType": "uint256", "name": "_projectId", "type": "uint256" },
+            { "internalType": "bytes32", "name": "_auditHash", "type": "bytes32" },
+            { "internalType": "bool", "name": "_passed", "type": "bool" }
+        ],
+        "name": "submitAuditResult",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
         "anonymous": false,
         "inputs": [
             { "indexed": true, "internalType": "uint256", "name": "projectId", "type": "uint256" },
@@ -86,15 +97,6 @@ export const PROJECT_ESCROW_ABI = [
         "name": "fundEscrow",
         "outputs": [],
         "stateMutability": "payable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            { "internalType": "bytes32", "name": "_codeHash", "type": "bytes32" }
-        ],
-        "name": "submitCode",
-        "outputs": [],
-        "stateMutability": "nonpayable",
         "type": "function"
     },
     {

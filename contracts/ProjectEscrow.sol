@@ -35,7 +35,6 @@ contract ProjectEscrow {
     // Immutable hashes for verification
     bytes32 public negotiationTermsHash;     // Hash of final negotiation terms
     bytes32 public aiEvaluationPromptHash;   // Immutable AI evaluation prompt hash
-    bytes32 public codeRepositoryHash;       // Hash of submitted code repository
 
     // AI audit results (requires 3/3 consensus)
     struct AuditResult {
@@ -57,7 +56,6 @@ contract ProjectEscrow {
     event ProjectCreated(uint256 indexed projectId, address client, address developer);
     event ContractSigned(bytes32 negotiationTermsHash, bytes32 aiPromptHash, uint256 deadline);
     event EscrowFunded(uint256 amount);
-    event CodeSubmitted(bytes32 codeHash);
     event AuditSubmitted(uint8 auditIndex, bytes32 auditHash, bool passed);
     event PaymentReleased(address developer, uint256 amount);
     event ProjectCancelled();
@@ -151,34 +149,29 @@ contract ProjectEscrow {
     }
 
     /**
-     * @notice Developer submits completed code
-     * @param _codeHash Hash of the code repository
-     */
-    function submitCode(bytes32 _codeHash) external onlyDeveloper {
-        require(
-            status == ProjectStatus.Funded || status == ProjectStatus.UnderDevelopment,
-            "Invalid status"
-        );
-        require(_codeHash != bytes32(0), "Invalid code hash");
-        require(block.timestamp <= deadline, "Deadline passed");
-
-        codeRepositoryHash = _codeHash;
-        status = ProjectStatus.CodeSubmitted;
-        submittedAt = block.timestamp;
-
-        emit CodeSubmitted(_codeHash);
-    }
-
-    /**
-     * @notice Submit AI audit result (called by backend)
+     * @notice Submit AI audit result (called by backend after code upload)
+     * @dev Automatically transitions to CodeSubmitted on first audit
      * @param _auditHash Hash of the audit response
      * @param _passed Whether audit passed
      */
     function submitAuditResult(
         bytes32 _auditHash,
         bool _passed
-    ) external onlyFactory inStatus(ProjectStatus.CodeSubmitted) {
+    ) external onlyFactory {
+        require(
+            status == ProjectStatus.Funded ||
+            status == ProjectStatus.UnderDevelopment ||
+            status == ProjectStatus.CodeSubmitted,
+            "Invalid status"
+        );
         require(auditCount < 3, "All audits submitted");
+        require(block.timestamp <= deadline, "Deadline passed");
+
+        // Auto-transition to CodeSubmitted on first audit
+        if (status != ProjectStatus.CodeSubmitted) {
+            status = ProjectStatus.CodeSubmitted;
+            submittedAt = block.timestamp;
+        }
 
         auditResults[auditCount] = AuditResult({
             auditHash: _auditHash,
@@ -292,7 +285,7 @@ contract ProjectEscrow {
             deadline,
             negotiationTermsHash,
             aiEvaluationPromptHash,
-            codeRepositoryHash
+            bytes32(0) // No longer storing code hash
         );
     }
 

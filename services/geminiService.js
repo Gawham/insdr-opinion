@@ -38,15 +38,36 @@ export async function generateContent(prompt, model = process.env.LLM_MODEL || "
  */
 export async function generateContentFromFile(fileBuffer, mimeType, prompt, model = process.env.LLM_MODEL || "gemini-3-flash-preview") {
   try {
-    const contents = [
-      { text: prompt },
-      {
-        inlineData: {
-          mimeType: mimeType,
-          data: fileBuffer.toString("base64")
-        }
-      }
+    // Supported MIME types for Gemini inline data
+    const supportedMimeTypes = [
+      'application/pdf',
+      'image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif',
+      'video/mp4', 'video/mpeg', 'video/mov', 'video/avi', 'video/webm'
     ];
+
+    let contents;
+
+    // Check if MIME type is supported for inline data
+    if (supportedMimeTypes.includes(mimeType)) {
+      // Use inline data for supported types
+      console.log(`Using inline data for supported MIME type: ${mimeType}`);
+      contents = [
+        { text: prompt },
+        {
+          inlineData: {
+            mimeType: mimeType,
+            data: fileBuffer.toString("base64")
+          }
+        }
+      ];
+    } else {
+      // For unsupported types (text files, scripts, etc.), extract text content
+      console.log(`Extracting text content for unsupported MIME type: ${mimeType}`);
+      const textContent = fileBuffer.toString('utf-8');
+      contents = [
+        { text: `${prompt}\n\nFile content:\n\`\`\`\n${textContent}\n\`\`\`` }
+      ];
+    }
 
     const response = await ai.models.generateContent({
       model,
