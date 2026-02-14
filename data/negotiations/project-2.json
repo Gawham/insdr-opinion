@@ -1,138 +1,33 @@
 {
   "projectId": 2,
-  "lastUpdated": "2026-02-14T15:08:45.157Z",
+  "lastUpdated": "2026-02-14T16:02:05.634Z",
   "blockchainActions": [
     {
       "action": "create_project",
-      "transactionHash": "0x7e1b144a1dd213be4745d780329a6d69baf85dcc96811b5f6971361630ff807f",
-      "blockNumber": "2722151",
+      "transactionHash": "0x40508c2bde0563ea38ea1dd909756a58d9c99439cb08e1927717f3559e8d5e06",
+      "blockNumber": "2722825",
       "from": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
-      "to": "0x9597efb118109881090e51244068438e38a2aac9",
+      "to": "0xd2fc1be6eb656355b4f39a2336bc48a23b4b5136",
       "status": "success",
-      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x7e1b144a1dd213be4745d780329a6d69baf85dcc96811b5f6971361630ff807f",
-      "timestamp": "2026-02-14T15:08:45.160Z"
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x40508c2bde0563ea38ea1dd909756a58d9c99439cb08e1927717f3559e8d5e06",
+      "timestamp": "2026-02-14T16:02:05.637Z"
     },
     {
       "action": "sign_contract",
-      "transactionHash": "0x371a1369d0c6c1ce20875a8dfcfffbf3e63dc1c56fa53b8a57785a85b16d585f",
-      "negotiationTermsHash": "0xe2c3df01cbcccadc5316954b9bc8dd6d9c2b55ed686278a3f9915133ac92213f",
-      "aiPromptHash": "0x07e7fc352961f376408b3884f211d417626cf271655e7b1c63314022de8720d3",
+      "transactionHash": "0xe3817c44a9064a37bfa906a6f54f5e6c1b5c412bcdd2eff8b94543c96b95c080",
+      "negotiationTermsHash": "0x01306cd2dbea1a0ab1bb00729547adc75044e073015f1b6e609876c5736f8083",
+      "aiPromptHash": "0xf3894876fcb6b0dc8140a722cae6f44384bf0932d18304cd36ed20bcd116621c",
       "status": "pending",
-      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x371a1369d0c6c1ce20875a8dfcfffbf3e63dc1c56fa53b8a57785a85b16d585f",
-      "timestamp": "2026-02-14T15:09:25.706Z"
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0xe3817c44a9064a37bfa906a6f54f5e6c1b5c412bcdd2eff8b94543c96b95c080",
+      "timestamp": "2026-02-14T16:02:41.983Z"
     },
     {
       "action": "fund_escrow",
-      "transactionHash": "0xb2ddad9a5d099f5a6005799bb08f6ccb36908a14374b02302f658c54eff2be65",
+      "transactionHash": "0x88c9a402cfd45aca6613ba39b40dfa33d3e1a40e00a4de92bb935ab51d34017f",
       "value": "25000000000000000",
       "status": "pending",
-      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0xb2ddad9a5d099f5a6005799bb08f6ccb36908a14374b02302f658c54eff2be65",
-      "timestamp": "2026-02-14T15:09:55.111Z"
-    },
-    {
-      "action": "ai_audit_complete",
-      "filename": "verify_upload_api.sh",
-      "fileSize": 1780,
-      "auditResults": [
-        {
-          "auditIndex": 1,
-          "passed": false,
-          "decision": "FAIL",
-          "reason": "The submitted file is a Bash script for testing API endpoints instead of the required Python file that prints 'hello world'.",
-          "hash": "0x69947518410d82fa3674f1fa2395be2a2c24930d22b868439afb813e8723bc52"
-        },
-        {
-          "auditIndex": 2,
-          "passed": false,
-          "decision": "FAIL",
-          "reason": "The submission contains a Bash script for testing an API instead of the required Python file that prints 'hello world'.",
-          "hash": "0x56c41629fa0dd7b99f6329a831800e4568525d8a10446242ae64fdcbbf016bcb"
-        },
-        {
-          "auditIndex": 3,
-          "passed": false,
-          "decision": "FAIL",
-          "reason": "The submission is a Bash script for testing an API rather than the required Python file that prints 'hello world'.",
-          "hash": "0x57844aa6fde0cdfb982cc4c78b5cac83e13f03d4a65fb9fd4c7355afdc4fb912"
-        }
-      ],
-      "consensusHash": "0x1b638ed739e050a2d60366802b56e7824202c72cc9975407a78a60760afacef5",
-      "consensusTransaction": "0x4da95af5975c4cc348d30cb65ca15c4cead7a9453e0358a9fee9e354729ef772",
-      "consensusReached": false,
-      "passCount": 0,
-      "decision": "REJECTED",
-      "status": "pending",
-      "timestamp": "2026-02-14T15:10:28.205Z"
-    },
-    {
-      "action": "ai_audit_complete",
-      "filename": "hello.py",
-      "fileSize": 21,
-      "auditResults": [
-        {
-          "auditIndex": 1,
-          "passed": false,
-          "decision": "FAIL",
-          "reason": "The submission fails to meet the exact capitalization requirement for the output string (\"Hello World\" instead of \"hello world\") and does not provide a filename with the mandatory '.py' extension.",
-          "hash": "0x645b741c0bbbf3c31899c847f289202a1277ac8777c9d31b2f5dc48f5745a773"
-        },
-        {
-          "auditIndex": 2,
-          "passed": false,
-          "decision": "FAIL",
-          "reason": "The submitted code prints \"Hello World\" with capitalized letters, which does not strictly match the lowercase string \"hello world\" specified in the project deliverables.",
-          "hash": "0xf4f84cd97863cbcbad42fa89a9a5a53f8d8c9eddb08263133e63f3f1c48d8db1"
-        },
-        {
-          "auditIndex": 3,
-          "passed": true,
-          "decision": "PASS",
-          "reason": "The submission correctly implements a Python script that prints the required string and adheres to all project specifications, including the deadline.",
-          "hash": "0xc1776b165d4131d6853fe330f8a7a556eed401e876e7f8d71f3269ba4d881d39"
-        }
-      ],
-      "consensusHash": "0x634f6b77f023a6072fe2650d6d982c0900b27f716d823c6280db77dc322ea4bd",
-      "consensusTransaction": "0x3a253e8eee8ee46f6c0ac568ec81248ae471e6718aedb8ece1237a865963eb04",
-      "consensusReached": false,
-      "passCount": 1,
-      "decision": "REJECTED",
-      "status": "pending",
-      "timestamp": "2026-02-14T15:11:47.850Z"
-    },
-    {
-      "action": "ai_audit_complete",
-      "filename": "hello.py",
-      "fileSize": 21,
-      "auditResults": [
-        {
-          "auditIndex": 1,
-          "passed": false,
-          "decision": "FAIL",
-          "reason": "The program prints \"Hello World\" with capitalized letters, which does not strictly adhere to the lowercase \"hello world\" output specified in the project deliverables.",
-          "hash": "0x7205a6c0d2fabfe62f19a5b9fbff116070efd84f16570f4d5d5dbf968f1f3f16"
-        },
-        {
-          "auditIndex": 2,
-          "passed": false,
-          "decision": "FAIL",
-          "reason": "The program prints \"Hello World\" with capitalized letters, which does not match the exact lowercase \"hello world\" string specified in the project requirements.",
-          "hash": "0x675931e575724ec4820586e6cfc936c266826f72a3bf848e1d401d3f4f97b024"
-        },
-        {
-          "auditIndex": 3,
-          "passed": true,
-          "decision": "PASS",
-          "reason": "The submission is a valid Python script that satisfies the core requirement of printing the requested phrase and meets the project deadline.",
-          "hash": "0xe8b9d77d57b463525bffdd4c36777cc962c72c05a73c395bb333ddf87ac3bf10"
-        }
-      ],
-      "consensusHash": "0x5ec8ee8c2253dd4ad18d067fff31e5306930002e02c33a4df46a1c6ca288d3ee",
-      "consensusTransaction": "0xefed00ec651592d65953fc7e1f27507b2ded8e1fc50f89c3f681a64297af18b0",
-      "consensusReached": false,
-      "passCount": 1,
-      "decision": "REJECTED",
-      "status": "pending",
-      "timestamp": "2026-02-14T15:17:27.278Z"
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x88c9a402cfd45aca6613ba39b40dfa33d3e1a40e00a4de92bb935ab51d34017f",
+      "timestamp": "2026-02-14T16:02:51.833Z"
     },
     {
       "action": "ai_audit_complete",
@@ -143,31 +38,31 @@
           "auditIndex": 1,
           "passed": true,
           "decision": "PASS",
-          "reason": "The submission correctly implements the required Python script to print 'hello world' and meets all specified project deliverables and deadline requirements.",
-          "hash": "0x4a4760c68e51d873ca815bda262c7641ced4e56248df7aa343a907207ab71852"
+          "reason": "The submission meets all requirements by providing valid Python code that correctly prints 'hello world' well before the specified deadline.",
+          "hash": "0x6e25f047802ae1dd356a7ccedb778c1ab11df4db194a39dc2798da577cd19d90"
         },
         {
           "auditIndex": 2,
           "passed": true,
           "decision": "PASS",
-          "reason": "The code correctly implements the required functionality of printing \"hello world\" in Python and satisfies all project deliverables and deadlines.",
-          "hash": "0x9c9edc949fe0ff044897fb8e0e05185392c43924f18b9cb0628eb15f2ed0d8f2"
+          "reason": "The submission correctly implements the required functionality by providing Python code that prints \"hello world\" and satisfies all project specifications.",
+          "hash": "0xb3005483fa216258532c89069b6f4fc026fdd0588185043d0b084284f55f8fef"
         },
         {
           "auditIndex": 3,
           "passed": true,
           "decision": "PASS",
-          "reason": "The submission correctly implements the required functionality by printing \"hello world\" in a Python script and meets all project specifications.",
-          "hash": "0x43c30943a00df80f80eda63cbf3ffdace469fa447553c69ee4406427a47efa8e"
+          "reason": "The submission fulfills all requirements by providing valid Python code that correctly prints 'hello world' within the specified deadline.",
+          "hash": "0xe0724b3cb166673cc86ae8c2900f95f2202497c4b9f90d10a3236b20db7a33c2"
         }
       ],
-      "consensusHash": "0xadda2f4fd3154ee2246b598dc79248a62bfb5d429326348f0e361dd6145e48b6",
-      "consensusTransaction": "0xa71ab249c1625db4ecb56e9eb7e27aae61a1846b66823a6099d71663d6b73f66",
+      "consensusHash": "0x8db64db5e185ee39e9423360702221608926b00a83927b4cd0a1924c10194a5e",
+      "consensusTransaction": "0xba13014b15a82e401c310dd8363b4cd077994bc2e02ccd385044b8e1b49ed843",
       "consensusReached": true,
       "passCount": 3,
       "decision": "APPROVED",
       "status": "pending",
-      "timestamp": "2026-02-14T15:18:48.259Z"
+      "timestamp": "2026-02-14T16:03:10.956Z"
     }
   ],
   "clientAddress": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
@@ -177,25 +72,25 @@
       "sender": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
       "content": "i want a python file that prints hello world and im very spesficac abotiu wantign a .py file",
       "senderRole": "client",
-      "timestamp": "2026-02-14T15:09:06.221Z"
+      "timestamp": "2026-02-14T16:02:24.931Z"
     }
   ],
   "terms": {
-    "projectDescription": "A Python program that prints 'hello world'.",
+    "projectDescription": "Create a Python file that prints 'hello world'.",
     "deliverables": [
       "A Python file",
-      "The file should print 'hello world'"
+      "The file must print 'hello world'"
     ],
     "additionalTerms": [
-      "The file must have a '.py' extension"
+      "The file must specifically be a .py file"
     ],
     "paymentAmount": "0.025 XTZ",
-    "deadline": "1772130600",
+    "deadline": "1771266600",
     "escrowAmount": "25000000000000000",
-    "aiEvaluationPrompt": "You are an AI auditor evaluating code submission for a development project.\n\nPROJECT REQUIREMENTS:\n{\n  \"projectDescription\": \"A Python program that prints 'hello world'.\",\n  \"deliverables\": [\n    \"A Python file\",\n    \"The file should print 'hello world'\"\n  ],\n  \"additionalTerms\": [\n    \"The file must have a '.py' extension\"\n  ],\n  \"paymentAmount\": \"0.025 XTZ\",\n  \"deadline\": \"27/02/2026\"\n}\n\nEVALUATION CRITERIA:\n- Does the code repository contain all required features?\n- Are all deliverables implemented according to specifications?\n- Is the code quality acceptable (no major bugs, follows best practices)?\n- Does the submission meet the deadline requirements?\n\nRespond in EXACTLY this format:\nDECISION: [PASS or FAIL]\nREASON: [One sentence explaining your decision]\n\nBe strict but fair in your evaluation.",
-    "aiPromptHash": "0x07e7fc352961f376408b3884f211d417626cf271655e7b1c63314022de8720d3",
-    "negotiationTermsHash": "0xe2c3df01cbcccadc5316954b9bc8dd6d9c2b55ed686278a3f9915133ac92213f"
+    "aiEvaluationPrompt": "You are an AI auditor evaluating code submission for a development project.\n\nPROJECT REQUIREMENTS:\n{\n  \"projectDescription\": \"Create a Python file that prints 'hello world'.\",\n  \"deliverables\": [\n    \"A Python file\",\n    \"The file must print 'hello world'\"\n  ],\n  \"additionalTerms\": [\n    \"The file must specifically be a .py file\"\n  ],\n  \"paymentAmount\": \"0.025 XTZ\",\n  \"deadline\": \"17/02/2026\"\n}\n\nEVALUATION CRITERIA:\n- Does the code repository contain all required features?\n- Are all deliverables implemented according to specifications?\n- Is the code quality acceptable (no major bugs, follows best practices)?\n- Does the submission meet the deadline requirements?\n\nRespond in EXACTLY this format:\nDECISION: [PASS or FAIL]\nREASON: [One sentence explaining your decision]\n\nBe strict but fair in your evaluation.",
+    "aiPromptHash": "0xf3894876fcb6b0dc8140a722cae6f44384bf0932d18304cd36ed20bcd116621c",
+    "negotiationTermsHash": "0x01306cd2dbea1a0ab1bb00729547adc75044e073015f1b6e609876c5736f8083"
   },
   "status": "finalized",
-  "finalizedAt": "2026-02-14T15:09:25.704Z"
+  "finalizedAt": "2026-02-14T16:02:41.980Z"
 }

@@ -391,9 +391,20 @@ app.post('/gotham/create-project', async (req, res) => {
     try {
         console.log('\n=== CREATE PROJECT ===');
         const { clientAddress, developerAddress } = req.body;
-        console.log('Request:', { clientAddress, developerAddress });
 
-        if (!clientAddress || !developerAddress) {
+        // Use developer address from .env if not provided or override if POC mode
+        const actualDeveloperAddress = developerAddress || developerAccount.address;
+
+        console.log('Request:', { clientAddress, developerAddress: actualDeveloperAddress });
+        console.log('⚠️  Developer address from .env:', developerAccount.address);
+
+        if (actualDeveloperAddress.toLowerCase() !== developerAccount.address.toLowerCase()) {
+            console.log('⚠️  WARNING: Using different developer address than .env!');
+            console.log('   Requested:', actualDeveloperAddress);
+            console.log('   .env has:', developerAccount.address);
+        }
+
+        if (!clientAddress || !actualDeveloperAddress) {
             console.log('❌ Missing addresses');
             return res.status(400).json({ error: "Client and developer addresses required" });
         }
@@ -411,7 +422,7 @@ app.post('/gotham/create-project', async (req, res) => {
             address: process.env.GOTHAM_FACTORY_ADDRESS,
             abi: GOTHAM_FACTORY_ABI,
             functionName: 'createProject',
-            args: [clientAddress, developerAddress],
+            args: [clientAddress, actualDeveloperAddress],
         });
         console.log('✅ Transaction sent:', hash);
         console.log('⏳ Waiting for receipt to get project ID...');
@@ -434,7 +445,7 @@ app.post('/gotham/create-project', async (req, res) => {
             await saveNegotiation(parsedProjectId, {
                 projectId: parsedProjectId,
                 clientAddress,
-                developerAddress,
+                developerAddress: actualDeveloperAddress,
                 messages: [],
                 terms: {},
                 status: 'ongoing'

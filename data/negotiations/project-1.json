@@ -1,0 +1,62 @@
+{
+  "projectId": 1,
+  "lastUpdated": "2026-02-14T15:49:38.526Z",
+  "blockchainActions": [
+    {
+      "action": "create_project",
+      "transactionHash": "0x48cf2a9d60b21136fab8f3ff9219825bfc7dc55a188881e31184afcd3c2e00a3",
+      "blockNumber": "2722665",
+      "from": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
+      "to": "0xa8e891f4985b6fbf30ae7ffc0363552be4168578",
+      "status": "success",
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x48cf2a9d60b21136fab8f3ff9219825bfc7dc55a188881e31184afcd3c2e00a3",
+      "timestamp": "2026-02-14T15:49:38.528Z"
+    },
+    {
+      "action": "sign_contract",
+      "transactionHash": "0xe8ab760165d56dc39fc2d4a5c5019613a2a7333722111838a70600f9008aa669",
+      "negotiationTermsHash": "0x7417a7583ee30fb80df2b3ee8998147af29497bfadebd57d1c21be60e8bca537",
+      "aiPromptHash": "0xdba3f005dae1d8021b005e7d8c1ffecb9753b67f44981a699e37374888237deb",
+      "status": "pending",
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0xe8ab760165d56dc39fc2d4a5c5019613a2a7333722111838a70600f9008aa669",
+      "timestamp": "2026-02-14T15:50:32.932Z"
+    },
+    {
+      "action": "fund_escrow",
+      "transactionHash": "0x90395037ff6f5c0fa0e7618e7570e842961bd8d8e8cfee043123f488af74888b",
+      "value": "25000000000000000",
+      "status": "pending",
+      "explorerUrl": "https://shadownet.explorer.etherlink.com/tx/0x90395037ff6f5c0fa0e7618e7570e842961bd8d8e8cfee043123f488af74888b",
+      "timestamp": "2026-02-14T15:50:51.724Z"
+    }
+  ],
+  "clientAddress": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
+  "developerAddress": "0x4b7236b9c62902935816eD94585516b837fCC611",
+  "messages": [
+    {
+      "sender": "0xd8349aff09364F110bA64d05C7B2F3710fE45585",
+      "content": "i want a python file that prints hello world and im very spesficac abotiu wantign a .py file",
+      "senderRole": "client",
+      "timestamp": "2026-02-14T15:50:16.122Z"
+    }
+  ],
+  "terms": {
+    "projectDescription": "Develop a Python program that prints 'hello world'.",
+    "deliverables": [
+      "A Python file",
+      "The file must have a .py extension",
+      "The file must print 'hello world' when executed"
+    ],
+    "additionalTerms": [
+      "The client is very specific about the deliverable being a .py file."
+    ],
+    "paymentAmount": "0.025 XTZ",
+    "deadline": "1771957800",
+    "escrowAmount": "25000000000000000",
+    "aiEvaluationPrompt": "You are an AI auditor evaluating code submission for a development project.\n\nPROJECT REQUIREMENTS:\n{\n  \"projectDescription\": \"Develop a Python program that prints 'hello world'.\",\n  \"deliverables\": [\n    \"A Python file\",\n    \"The file must have a .py extension\",\n    \"The file must print 'hello world' when executed\"\n  ],\n  \"additionalTerms\": [\n    \"The client is very specific about the deliverable being a .py file.\"\n  ],\n  \"paymentAmount\": \"0.025 XTZ\",\n  \"deadline\": \"25/02/2026\"\n}\n\nEVALUATION CRITERIA:\n- Does the code repository contain all required features?\n- Are all deliverables implemented according to specifications?\n- Is the code quality acceptable (no major bugs, follows best practices)?\n- Does the submission meet the deadline requirements?\n\nRespond in EXACTLY this format:\nDECISION: [PASS or FAIL]\nREASON: [One sentence explaining your decision]\n\nBe strict but fair in your evaluation.",
+    "aiPromptHash": "0xdba3f005dae1d8021b005e7d8c1ffecb9753b67f44981a699e37374888237deb",
+    "negotiationTermsHash": "0x7417a7583ee30fb80df2b3ee8998147af29497bfadebd57d1c21be60e8bca537"
+  },
+  "status": "finalized",
+  "finalizedAt": "2026-02-14T15:50:32.930Z"
+}
