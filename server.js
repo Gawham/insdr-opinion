@@ -13,6 +13,13 @@ import {
     generateContentFromFile,
     generateContentFromUrl
 } from './services/geminiService.js';
+import {
+    saveNegotiation,
+    loadNegotiation,
+    appendNegotiationMessage,
+    finalizeNegotiation
+} from './services/negotiationService.js';
+import { GOTHAM_FACTORY_ABI, PROJECT_ESCROW_ABI } from './contracts-abi.js';
 
 dotenv.config();
 
@@ -341,6 +348,320 @@ app.post('/analyze-url', async (req, res) => {
 
     } catch (error) {
         console.error("Analyze URL error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ========================================
+// GOTHAM PLATFORM ENDPOINTS
+// ========================================
+
+// Create new project
+app.post('/gotham/create-project', async (req, res) => {
+    try {
+        const { clientAddress, developerAddress } = req.body;
+
+        if (!clientAddress || !developerAddress) {
+            return res.status(400).json({ error: "Client and developer addresses required" });
+        }
+
+        if (!process.env.GOTHAM_FACTORY_ADDRESS) {
+            return res.status(500).json({ error: "GOTHAM_FACTORY_ADDRESS not configured" });
+        }
+
+        // Call factory contract to create new project
+        const hash = await walletClient.writeContract({
+            address: process.env.GOTHAM_FACTORY_ADDRESS,
+            abi: GOTHAM_FACTORY_ABI,
+            functionName: 'createProject',
+            args: [clientAddress, developerAddress],
+        });
+
+        // Wait for transaction receipt to get project ID and escrow address
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+        // Parse logs to get projectId and escrowContract from ProjectCreated event
+        let projectId, escrowContract;
+        if (receipt.logs && receipt.logs.length > 0) {
+            // First topic is event signature, second is projectId
+            projectId = receipt.logs[0].topics[1];
+            escrowContract = receipt.logs[0].topics[2];
+        }
+
+        res.status(200).json({
+            message: "Project created successfully",
+            transactionHash: hash,
+            projectId: projectId ? parseInt(projectId, 16) : null,
+            escrowContract,
+            explorerUrl: `https://shadownet.explorer.etherlink.com/tx/${hash}`
+        });
+
+    } catch (error) {
+        console.error("Create project error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Save negotiation message
+app.post('/gotham/negotiation/:projectId/message', async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const { sender, content, senderRole } = req.body;
+
+        if (!content || !sender || !senderRole) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const message = { sender, content, senderRole };
+        const negotiation = await appendNegotiationMessage(parseInt(projectId), message);
+
+        res.status(200).json({
+            message: "Message added to negotiation",
+            negotiation
+        });
+
+    } catch (error) {
+        console.error("Negotiation message error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get negotiation data
+app.get('/gotham/negotiation/:projectId', async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const negotiation = await loadNegotiation(parseInt(projectId));
+
+        if (!negotiation) {
+            return res.status(404).json({ error: "Negotiation not found" });
+        }
+
+        res.status(200).json(negotiation);
+
+    } catch (error) {
+        console.error("Get negotiation error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Finalize negotiation and generate AI prompt
+app.post('/gotham/negotiation/:projectId/finalize', async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const { finalTerms, escrowAmount, deadline } = req.body;
+
+        if (!finalTerms || !escrowAmount || !deadline) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        // Generate AI evaluation prompt based on final terms
+        const promptTemplate = `You are an AI auditor evaluating code submission for a development project.
+
+PROJECT REQUIREMENTS:
+${JSON.stringify(finalTerms, null, 2)}
+
+EVALUATION CRITERIA:
+- Does the code repository contain all required features?
+- Are all deliverables implemented according to specifications?
+- Is the code quality acceptable (no major bugs, follows best practices)?
+- Does the submission meet the deadline requirements?
+
+Analyze the submitted code repository and respond with:
+1. PASS or FAIL
+2. Detailed reasoning for your decision
+3. List of completed requirements
+4. List of missing or incomplete requirements (if any)
+
+Be strict but fair in your evaluation.`;
+
+        const aiPromptHash = keccak256(toHex(promptTemplate));
+        const negotiationTermsHash = keccak256(toHex(JSON.stringify(finalTerms)));
+
+        // Save finalized negotiation with AI prompt
+        const negotiation = await finalizeNegotiation(parseInt(projectId), {
+            ...finalTerms,
+            escrowAmount,
+            deadline,
+            aiEvaluationPrompt: promptTemplate,
+            aiPromptHash,
+            negotiationTermsHash
+        });
+
+        res.status(200).json({
+            message: "Negotiation finalized",
+            negotiation,
+            aiPromptHash,
+            negotiationTermsHash
+        });
+
+    } catch (error) {
+        console.error("Finalize negotiation error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Submit code for audit (developer uploads code)
+app.post('/gotham/submit-code/:projectId', upload.single('codeArchive'), async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).json({ error: "No code archive provided" });
+        }
+
+        if (!process.env.GOTHAM_FACTORY_ADDRESS) {
+            return res.status(500).json({ error: "GOTHAM_FACTORY_ADDRESS not configured" });
+        }
+
+        // Generate hash of submitted code
+        const codeHash = keccak256(file.buffer);
+
+        // Get project escrow contract address
+        const escrowAddress = await publicClient.readContract({
+            address: process.env.GOTHAM_FACTORY_ADDRESS,
+            abi: GOTHAM_FACTORY_ABI,
+            functionName: 'getProjectContract',
+            args: [BigInt(projectId)]
+        });
+
+        // Call escrow contract to submit code
+        const hash = await walletClient.writeContract({
+            address: escrowAddress,
+            abi: PROJECT_ESCROW_ABI,
+            functionName: 'submitCode',
+            args: [codeHash],
+        });
+
+        // Store code archive (optional - save to GCS or local storage)
+        // For now, just return the hash
+
+        res.status(200).json({
+            message: "Code submitted for audit",
+            transactionHash: hash,
+            codeHash,
+            projectId,
+            explorerUrl: `https://shadownet.explorer.etherlink.com/tx/${hash}`
+        });
+
+    } catch (error) {
+        console.error("Submit code error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Run AI audit (3 Gemini calls for consensus)
+app.post('/gotham/audit/:projectId', upload.single('codeArchive'), async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).json({ error: "No code archive provided" });
+        }
+
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
+        }
+
+        // Load negotiation to get AI evaluation prompt
+        const negotiation = await loadNegotiation(parseInt(projectId));
+        if (!negotiation || !negotiation.terms.aiEvaluationPrompt) {
+            return res.status(400).json({ error: "No AI evaluation prompt found for this project" });
+        }
+
+        const aiPrompt = negotiation.terms.aiEvaluationPrompt;
+
+        // Run 3 independent AI audits
+        const auditPromises = [
+            generateContentFromFile(file.buffer, file.mimetype, aiPrompt),
+            generateContentFromFile(file.buffer, file.mimetype, aiPrompt),
+            generateContentFromFile(file.buffer, file.mimetype, aiPrompt)
+        ];
+
+        const auditResults = await Promise.all(auditPromises);
+
+        // Analyze results for consensus
+        const passCount = auditResults.filter(result =>
+            result.toLowerCase().includes('pass') && !result.toLowerCase().includes('fail')
+        ).length;
+
+        const consensusReached = passCount === 3; // All 3 must pass
+
+        // Submit audit results to blockchain
+        if (!process.env.GOTHAM_FACTORY_ADDRESS) {
+            return res.status(500).json({ error: "GOTHAM_FACTORY_ADDRESS not configured" });
+        }
+
+        const auditHashes = auditResults.map(result => keccak256(toHex(result)));
+
+        // Submit each audit result to the factory contract
+        for (let i = 0; i < 3; i++) {
+            const passed = auditResults[i].toLowerCase().includes('pass') &&
+                         !auditResults[i].toLowerCase().includes('fail');
+
+            await walletClient.writeContract({
+                address: process.env.GOTHAM_FACTORY_ADDRESS,
+                abi: GOTHAM_FACTORY_ABI,
+                functionName: 'submitAuditResult',
+                args: [BigInt(projectId), auditHashes[i], passed],
+            });
+        }
+
+        res.status(200).json({
+            message: "AI audit completed",
+            projectId,
+            consensusReached,
+            passCount,
+            auditResults: auditResults.map((result, idx) => ({
+                auditIndex: idx,
+                hash: auditHashes[idx],
+                passed: result.toLowerCase().includes('pass') && !result.toLowerCase().includes('fail'),
+                summary: result.substring(0, 200) + '...'
+            }))
+        });
+
+    } catch (error) {
+        console.error("AI audit error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get project details
+app.get('/gotham/project/:projectId', async (req, res) => {
+    try {
+        const { projectId } = req.params;
+
+        if (!process.env.GOTHAM_FACTORY_ADDRESS) {
+            return res.status(500).json({ error: "GOTHAM_FACTORY_ADDRESS not configured" });
+        }
+
+        // Get project details from factory contract
+        const projectDetails = await publicClient.readContract({
+            address: process.env.GOTHAM_FACTORY_ADDRESS,
+            abi: GOTHAM_FACTORY_ABI,
+            functionName: 'getProjectDetails',
+            args: [BigInt(projectId)]
+        });
+
+        const [escrowContract, client, developer, escrowAmount, status, deadline] = projectDetails;
+
+        // Get negotiation data
+        const negotiation = await loadNegotiation(parseInt(projectId));
+
+        res.status(200).json({
+            projectId,
+            escrowContract,
+            client,
+            developer,
+            escrowAmount: escrowAmount.toString(),
+            status,
+            deadline: deadline.toString(),
+            negotiation
+        });
+
+    } catch (error) {
+        console.error("Get project error:", error);
         res.status(500).json({ error: error.message });
     }
 });

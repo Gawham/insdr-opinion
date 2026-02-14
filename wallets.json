@@ -1,0 +1,62 @@
+{
+    "admin": {
+        "role": "admin",
+        "address": "0xd8349aff09364F110bA64d05C7B2F3710fE45585"
+    },
+    "treasury": {
+        "role": "treasury",
+        "address": "0x20e493b5DF87CE996172326B72AaF3Af9c5eeb59"
+    },
+    "auditors": {
+        "financial": [
+            {
+                "role": "financial_auditor_1",
+                "address": "0xeDADc00AA45eABF76444EB2B496bD208c4c84104"
+            },
+            {
+                "role": "financial_auditor_2",
+                "address": "0x338fcA67A5e2d1d36117b6E25586F856BeA587db"
+            }
+        ],
+        "medical": [
+            {
+                "role": "medical_auditor_1",
+                "address": "0x33F941d3b611E686f202190369489ab091c8110A"
+            },
+            {
+                "role": "medical_auditor_2",
+                "address": "0xe3D7e451c825dA7cDaF77111458E3Ee19b28214D"
+            }
+        ],
+        "political": [
+            {
+                "role": "political_auditor_1",
+                "address": "0x0D2E96e7F4314A32EB2eb7BBa13bFD8b88a0a089"
+            },
+            {
+                "role": "political_auditor_2",
+                "address": "0xAd900Ae5e29472e17B801d059A371F7BE4c3A1eF"
+            }
+        ],
+        "legal": [
+            {
+                "role": "legal_auditor_1",
+                "address": "0xFD02681654CDcfa0d6a2e35D6b36032514187AEB"
+            },
+            {
+                "role": "legal_auditor_2",
+                "address": "0xaA624A517751D51460ec67f9A258948590DE249d"
+            }
+        ],
+        "data_analyst": [
+            {
+                "role": "data_analyst_1",
+                "address": "0x5056B28cb99DEB44612e2372aDCcF8373e7Bcf94"
+            },
+            {
+                "role": "data_analyst_2",
+                "address": "0x82a391c72E96Bf680e29C20aAB881F397D120567"
+            }
+        ]
+    }
+}

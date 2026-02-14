@@ -1,7 +1,7 @@
 
 import dotenv from 'dotenv';
 dotenv.config();
-import "@nomicfoundation/hardhat-ethers";
+import "@nomicfoundation/hardhat-viem";
 
 /** @type import('hardhat/config').HardhatUserConfig */
 export default {
